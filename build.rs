@@ -3,8 +3,6 @@ use std::path::PathBuf;
 
 use lazy_static::lazy_static;
 
-const SDK_PATH: &str = "/home/harry/Development/rapitag/dialog/6.0.16.1144";
-
 lazy_static! {
     static ref INCLUDE_PATHS: Vec<&'static str> = vec![
         "sdk/app_modules/api",
@@ -84,8 +82,11 @@ lazy_static! {
 }
 
 fn generate_bindings(header: &str, rustify_enums: Option<Vec<&str>>) {
+    let sdk_path = env::var("SDK_PATH").expect("SDK_PATH not set!");
+    let config_path = env::var("CONFIG_PATH").expect("CONFIG_PATH not set!");
+
     let mut builder = bindgen::Builder::default()
-        .header(format!("{}/{}", SDK_PATH, header))
+        .header(format!("{}/{}", sdk_path, header))
         .clang_arg("-D__DA14531__")
         .ctypes_prefix("cty")
         .use_core()
@@ -95,11 +96,14 @@ fn generate_bindings(header: &str, rustify_enums: Option<Vec<&str>>) {
         .clang_arg("-Wno-expansion-to-defined");
 
     for inc_path in INCLUDE_PATHS.iter() {
-        builder = builder.clang_arg(format!("-I{}/{}", SDK_PATH, inc_path));
+        builder = builder.clang_arg(format!("-I{}/{}", sdk_path, inc_path));
     }
 
     for config_include in CONFIG_INCLUDES.iter() {
-        builder = builder.clang_args(vec!["-include", config_include]);
+        builder = builder.clang_args(vec![
+            "-include",
+            &format!("{}/{}", config_path, config_include),
+        ]);
     }
 
     if let Some(rustify_enums) = rustify_enums {
@@ -119,6 +123,8 @@ fn generate_bindings(header: &str, rustify_enums: Option<Vec<&str>>) {
 }
 
 fn main() {
+    println!("cargo:warning={}", env::var("SDK_PATH").unwrap());
+
     generate_bindings(
         "sdk/platform/driver/syscntl/syscntl.h",
         Some(vec!["syscntl_dcdc_level_t"]),

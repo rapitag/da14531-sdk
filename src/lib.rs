@@ -59,7 +59,7 @@ pub mod syscntl {
     pub use inner::{syscntl_dcdc_level_t as SyscntlDcdcLevel, app_env};
 
     #[inline]
-    pub fn syscntl_dcdc_turn_on_in_boost(dcdc_level: SyscntlDcdcLevel) {
+    pub fn dcdc_turn_on_in_boost(dcdc_level: SyscntlDcdcLevel) {
         unsafe {
             inner::syscntl_dcdc_turn_on_in_boost(dcdc_level);
         }

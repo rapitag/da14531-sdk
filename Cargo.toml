@@ -1,0 +1,11 @@
+[package]
+edition = "2021"
+name = "da14531-sdk"
+version = "0.1.0"
+
+[dependencies]
+cty = "0.2.2"
+
+[build-dependencies]
+bindgen = "0.59.2"
+lazy_static = "1.4.0"

@@ -74,24 +74,22 @@ lazy_static! {
         "sdk/platform/utilities/otp_cs",
         "sdk/platform/utilities/otp_hdr",
     ];
-    static ref CONFIG_INCLUDES: Vec<&'static str> = vec![
-        "config/da1458x_config_basic.h",
-        "config/da1458x_config_advanced.h",
-        "config/user_config.h"
-    ];
 }
 
-fn generate_bindings(header: &str, rustify_enums: Option<Vec<&str>>) {
+#[derive(Debug)]
+struct ParseCallbacksImpl;
+
+fn generate_bindings(rustify_enums: Vec<&str>) {
     let sdk_path = env::var("SDK_PATH").expect("SDK_PATH not set!");
     let config_path = env::var("CONFIG_PATH").expect("CONFIG_PATH not set!");
 
     let mut builder = bindgen::Builder::default()
-        .header(format!("{}/{}", sdk_path, header))
+        .header("bindings.h")
         .clang_arg("-D__DA14531__")
         .ctypes_prefix("cty")
         .use_core()
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        .clang_arg("-Iconfig")
+        .clang_arg(format!("-I{}", config_path))
         .clang_arg("-I/usr/lib/newlib-nano/arm-none-eabi/include")
         .clang_arg("-Wno-expansion-to-defined");
 
@@ -99,42 +97,28 @@ fn generate_bindings(header: &str, rustify_enums: Option<Vec<&str>>) {
         builder = builder.clang_arg(format!("-I{}/{}", sdk_path, inc_path));
     }
 
-    for config_include in CONFIG_INCLUDES.iter() {
-        builder = builder.clang_args(vec![
-            "-include",
-            &format!("{}/{}", config_path, config_include),
-        ]);
-    }
-
-    if let Some(rustify_enums) = rustify_enums {
-        for re in rustify_enums {
-            builder = builder.rustified_enum(re)
-        }
+    for re in rustify_enums {
+        builder = builder.rustified_enum(re)
     }
 
     let bindings = builder.generate().expect("Unable to generate bindings");
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let header_path = PathBuf::from(header);
-    let binding = format!("{}.rs", header_path.file_name().unwrap().to_str().unwrap());
     bindings
-        .write_to_file(out_path.join(binding))
+        .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 }
 
 fn main() {
     println!("cargo:warning={}", env::var("SDK_PATH").unwrap());
 
-    generate_bindings(
-        "sdk/platform/driver/syscntl/syscntl.h",
-        Some(vec!["syscntl_dcdc_level_t"]),
-    );
-    generate_bindings("sdk/platform/system_library/include/system_library.h", None);
-    generate_bindings("sdk/platform/core_modules/ke/api/ke_msg.h", None);
-    generate_bindings(
-        "sdk/ble_stack/profiles/custom/custs/api/custs1_task.h",
-        None,
-    );
+    generate_bindings(vec![
+        "syscntl_dcdc_level_t",
+        "hl_err",
+        "gapc_msg_id",
+        "gap_ad_type",
+    ]);
 
+    println!("cargo:rerun-if-changed=bindings.h");
     println!("cargo:rerun-if-changed=build.rs");
 }

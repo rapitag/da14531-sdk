@@ -110,15 +110,19 @@ fn generate_bindings(rustify_enums: Vec<&str>) {
 }
 
 fn main() {
-    println!("cargo:warning={}", env::var("SDK_PATH").unwrap());
+    let config_path = env::var("CONFIG_PATH").expect("CONFIG_PATH not set!");
 
     generate_bindings(vec![
         "syscntl_dcdc_level_t",
         "hl_err",
         "gapc_msg_id",
         "gap_ad_type",
+        "KE_API_ID"
     ]);
 
+    println!("cargo:rerun-if-changed={}/da1458x_config_basic.h", config_path);
+    println!("cargo:rerun-if-changed={}/da1458x_config_advanced.h", config_path);
+    println!("cargo:rerun-if-changed={}/user_config.h", config_path);
     println!("cargo:rerun-if-changed=bindings.h");
     println!("cargo:rerun-if-changed=build.rs");
 }

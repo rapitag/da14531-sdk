@@ -40,3 +40,8 @@ pub mod ke {
 pub mod common {
     pub use crate::bindings::{ADV_DATA_LEN, SCAN_RSP_DATA_LEN};
 }
+
+
+pub mod rwip {
+    pub use crate::bindings::KE_API_ID as KeApiId;
+}

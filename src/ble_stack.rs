@@ -24,6 +24,14 @@ pub mod host {
             }
         }
     }
+
+    pub mod att {
+        pub mod attm {
+            pub use crate::bindings::{
+                attm_desc_128 as AttmDesc128
+            };
+        }
+    }
 }
 
 pub mod profiles {

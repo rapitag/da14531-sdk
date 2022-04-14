@@ -1,10 +1,15 @@
 pub use crate::bindings::{
     app_env, timer_callback as TimerCallback, timer_hnd as TimerHnd, EASY_TIMER_INVALID_TIMER,
+    cust_prf_func_callbacks as CustPrfFuncCallbacks, app_custs1_create_db
 };
 
 use crate::{ble_stack::host::gap::{
     gapc::task::GapcConnectionReqInd, gapm::task::GapmStartAdvertiseCmd,
 }, core_modules::common::{ADV_DATA_LEN, SCAN_RSP_DATA_LEN}};
+
+pub fn app_env_get_conidx(conidx:u8) -> u8 {
+    unsafe { app_env.get_unchecked(conidx as usize).conidx }
+}
 
 pub fn app_easy_gap_param_update_start(conidx: u8) {
     unsafe {

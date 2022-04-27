@@ -45,6 +45,7 @@ lazy_static! {
         "sdk/platform/arch/main",
         "sdk/platform/core_modules/arch_console",
         "sdk/platform/core_modules/common/api",
+        "sdk/platform/core_modules/crypto",
         "sdk/platform/core_modules/dbg/api",
         "sdk/platform/core_modules/gtl/api",
         "sdk/platform/core_modules/gtl/src",
@@ -73,6 +74,7 @@ lazy_static! {
         "sdk/platform/system_library/include",
         "sdk/platform/utilities/otp_cs",
         "sdk/platform/utilities/otp_hdr",
+        "third_party/irng"
     ];
 }
 
@@ -88,6 +90,7 @@ fn generate_bindings(rustify_enums: Vec<&str>) {
         .clang_arg("-D__DA14531__")
         .ctypes_prefix("cty")
         .use_core()
+        .size_t_is_usize(true)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .clang_arg(format!("-I{}", config_path))
         .clang_arg("-I/usr/lib/newlib-nano/arm-none-eabi/include")
@@ -113,15 +116,24 @@ fn main() {
     let config_path = env::var("CONFIG_PATH").expect("CONFIG_PATH not set!");
 
     generate_bindings(vec![
-        "syscntl_dcdc_level_t",
-        "hl_err",
-        "gapc_msg_id",
         "gap_ad_type",
-        "KE_API_ID"
+        "gapc_msg_id",
+        "hl_err",
+        "ke_msg_status_tag",
+        "process_event_response",
+        "syscntl_dcdc_level_t",
+        "APP_MSG",
+        "KE_TASK_TYPE",
     ]);
 
-    println!("cargo:rerun-if-changed={}/da1458x_config_basic.h", config_path);
-    println!("cargo:rerun-if-changed={}/da1458x_config_advanced.h", config_path);
+    println!(
+        "cargo:rerun-if-changed={}/da1458x_config_basic.h",
+        config_path
+    );
+    println!(
+        "cargo:rerun-if-changed={}/da1458x_config_advanced.h",
+        config_path
+    );
     println!("cargo:rerun-if-changed={}/user_config.h", config_path);
     println!("cargo:rerun-if-changed=bindings.h");
     println!("cargo:rerun-if-changed=build.rs");

@@ -9,7 +9,6 @@
 #include "app.h"
 #include "app_customs.h"
 #include "app_easy_gap.h"
-// #include "app_easy_timer.h"
 #include "app_entry_point.h"
 #include "app_prf_types.h"
 
@@ -19,14 +18,13 @@
 #include "gapc_task.h"
 #include "attm_db_128.h"
 
-// core_modules
-#include "ke_msg.h"
-#include "rwip_config.h"
-
 // platform
 #include "syscntl.h"
 #include "system_library.h"
-#include "trng.h"
+#include "ke_msg.h"
+#include "rwip_config.h"
+#include "rwip.h"
+#include "aes.h"
 
 const uint8_t APP_MODULES_TIMER_MAX_NUM = (APP_TIMER_API_LAST_MES - APP_TIMER_API_MES0 + 1);
 const uint16_t APP_MODULES_TIMER_API_MES0 = APP_TIMER_API_MES0;

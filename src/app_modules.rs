@@ -26,6 +26,13 @@ pub fn app_easy_gap_param_update_start(conidx: u8) {
 }
 
 #[inline]
+pub fn app_easy_gap_disconnect(conidx: u8) {
+    unsafe {
+        crate::bindings::app_easy_gap_disconnect(conidx);
+    }
+}
+
+#[inline]
 pub fn app_easy_gap_undirected_advertise_get_active() -> &'static mut GapmStartAdvertiseCmd {
     unsafe { &mut *crate::bindings::app_easy_gap_undirected_advertise_get_active() }
 }

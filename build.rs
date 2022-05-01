@@ -123,7 +123,6 @@ fn main() {
         "process_event_response",
         "syscntl_dcdc_level_t",
         "APP_MSG",
-        "KE_TASK_TYPE",
     ]);
 
     println!(

@@ -1,17 +1,40 @@
 pub use crate::bindings::{
-    app_custs1_create_db, app_env, cust_prf_func_callbacks as CustPrfFuncCallbacks,
+    app_env, prf_func_uint8_t, prf_func_validate_t, prf_func_void_t,
     process_event_response as ProcessEventResponse, timer_hnd as TimerHandle, APP_MSG as AppMsg,
-    EASY_TIMER_INVALID_TIMER,
+    EASY_TIMER_INVALID_TIMER, app_prf_srv_perm_t as AppPrfSrvPerm
 };
 
 use crate::{
     ble_stack::host::gap::{gapc::task::GapcConnectionReqInd, gapm::task::GapmStartAdvertiseCmd},
-    platform::core_modules::common::{ADV_DATA_LEN, SCAN_RSP_DATA_LEN},
+    platform::core_modules::{
+        common::{ADV_DATA_LEN, SCAN_RSP_DATA_LEN},
+        rwip::KeApiId,
+    },
 };
 
+pub mod app_custs;
 pub mod timer;
 
 pub type TimerCallback = unsafe extern "C" fn();
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct CustPrfFuncCallbacks {
+    #[doc = " Profile Task ID."]
+    pub task_id: KeApiId,
+    #[doc = " pointer to the custom database table defined by user"]
+    pub att_db: usize,
+    #[doc = " max number of attributes in custom database"]
+    pub max_nb_att: u8,
+    #[doc = " Pointer to the custom database create function defined by user"]
+    pub db_create_func: prf_func_void_t,
+    #[doc = " Pointer to the custom profile enable function defined by user"]
+    pub enable_func: prf_func_uint8_t,
+    #[doc = " Pointer to the custom profile initialization function"]
+    pub init_func: prf_func_void_t,
+    #[doc = " Pointer to the validation function defined by user"]
+    pub value_wr_validation_func: prf_func_validate_t,
+}
 
 #[inline]
 pub fn app_env_get_conidx(conidx: u8) -> u8 {
@@ -75,6 +98,11 @@ pub fn default_app_on_init() {
     unsafe {
         crate::bindings::default_app_on_init();
     }
+}
+
+#[inline]
+pub fn get_user_prf_srv_perm(task_id: KeApiId) -> AppPrfSrvPerm {
+    unsafe { crate::bindings::get_user_prf_srv_perm(task_id) }
 }
 
 pub mod msg_utils {

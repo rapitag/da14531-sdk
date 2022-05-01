@@ -7,7 +7,6 @@
 
 // app_modules
 #include "app.h"
-#include "app_customs.h"
 #include "app_easy_gap.h"
 #include "app_entry_point.h"
 #include "app_prf_types.h"
@@ -16,6 +15,7 @@
 #include "custs1_task.h"
 #include "gap.h"
 #include "gapc_task.h"
+#include "gapm_task.h"
 #include "attm_db_128.h"
 
 // platform

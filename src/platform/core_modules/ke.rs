@@ -39,25 +39,33 @@ pub mod msg {
     macro_rules! kernel_msg_type {
         ($Msg: ty, $id: ident) => {
             paste::paste! {
+                #[allow(dead_code)]
                 pub type [<KeMsg $Msg>] = $crate::platform::core_modules::ke::msg::KernelMessage<$id, 0, $Msg>;
+                #[allow(dead_code)]
                 pub type [<KeMsgDyn $Msg>]<const SIZE: u16> = $crate::platform::core_modules::ke::msg::KernelMessage<$id, SIZE, $Msg>;
             }
         };
         ($Prefix: ident, $Msg: ty, $id: ident) => {
             paste::paste! {
+                #[allow(dead_code)]
                 pub type [<KeMsg $Prefix $Msg>] = $crate::platform::core_modules::KernelMessage<$id, 0, $Msg>;
+                #[allow(dead_code)]
                 pub type [<KeMsgDyn $Prefix $Msg>]<const SIZE: u16> = $crate::platform::core_modules::ke::msg::KernelMessage<$id, SIZE, $Msg>;
             }
         };
         (private, $Msg: ty, $id: ident) => {
             paste::paste! {
+                #[allow(dead_code)]
                 type [<KeMsg $Msg>] = KernelMessage<$id, 0, $Msg>;
+                #[allow(dead_code)]
                 type [<KeMsgDyn $Msg>]<const SIZE: u16> = $crate::platform::core_modules::ke::msg::KernelMessage<$id, SIZE, $Msg>;
             }
         };
         (private, $Prefix: ident, $Msg: ty, $id: ident) => {
             paste::paste! {
+                #[allow(dead_code)]
                 type [<KeMsg $Prefix $Msg>] = KernelMessage<$id, 0, $Msg>;
+                #[allow(dead_code)]
                 type [<KeMsgDyn $Prefix $Msg>]<const SIZE: u16> = $crate::platform::core_modules::ke::msg::KernelMessage<$id, SIZE, $Msg>;
             }
         };

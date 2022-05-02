@@ -1,19 +1,5 @@
-// const struct cust_prf_func_callbacks *custs_get_func_callbacks(enum KE_API_ID task_id)
-// {
-//     int i = 0;
-
 use rtt_target::rprintln;
 
-//     // max number of service characteristics
-//     while (cust_prf_funcs[i].task_id != TASK_ID_INVALID)
-//     {
-//         if(cust_prf_funcs[i].task_id == task_id)
-//             return &cust_prf_funcs[i];
-//         else
-//             i++;
-//     }
-//     return NULL;
-// }
 use crate::{
     app_modules::KeApiId,
     bindings::{cust_prf_func_callbacks as CustPrfFuncCallbacks, KE_API_ID_TASK_ID_INVALID},

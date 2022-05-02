@@ -1,9 +1,6 @@
 pub mod msg {
 
-    pub use crate::bindings::{
-        ke_msg_id_t as KeMsgId, ke_msg_status_tag as KeMsgStatusTag,
-        ke_task_id_t as KeTaskId,
-    };
+    pub use crate::bindings::{ke_msg_id_t as KeMsgId, ke_msg_status_tag as KeMsgStatusTag};
 
     use crate::bindings::{ke_msg_alloc, ke_msg_send};
 
@@ -75,7 +72,7 @@ pub mod msg {
 }
 
 pub mod timer {
-    use super::msg::{KeMsgId, KeTaskId};
+    use super::{msg::KeMsgId, task::KeTaskId};
 
     #[inline]
     pub fn ke_timer_set(timer_id: KeMsgId, task: KeTaskId, delay: u32) {
@@ -89,5 +86,28 @@ pub mod timer {
         unsafe {
             crate::bindings::ke_timer_clear(timer_id, task);
         }
+    }
+}
+
+pub mod task {
+    pub use crate::bindings::{
+        ke_state_handler as KeStateHandler, ke_state_t as KeState, ke_task_id_t as KeTaskId,
+    };
+
+    pub fn ke_state_set(task_id: KeTaskId, state_id: KeState) {
+        unsafe {
+            crate::bindings::ke_state_set(task_id, state_id);
+        }
+    }
+}
+
+pub mod mem {
+    pub fn ke_malloc<T>(mem_type: u32) -> *mut T {
+        let len = core::mem::size_of::<T>();
+        unsafe { crate::bindings::ke_malloc(len as u32, mem_type as u8) as *mut T }
+    }
+
+    pub fn ke_free<T>(ptr: *mut T) {
+        unsafe { crate::bindings::ke_free(ptr as *mut cty::c_void) }
     }
 }

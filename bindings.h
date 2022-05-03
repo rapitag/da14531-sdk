@@ -10,13 +10,17 @@
 #include "app_easy_gap.h"
 #include "app_entry_point.h"
 #include "app_prf_types.h"
+#include "app_customs.h"
+#include "app_task.h"
 
 // ble_stack
 #include "custs1_task.h"
+#include "custs1.h"
 #include "gap.h"
 #include "gapc_task.h"
 #include "gapm_task.h"
 #include "attm_db_128.h"
+#include "llm.h"
 
 // platform
 #include "syscntl.h"

@@ -1,12 +1,12 @@
 use crate::{
     app_modules::get_user_prf_srv_perm,
     ble_stack::host::gap::gapm::task::KeMsgDynGapmProfileTaskAdd,
+    platform::core_modules::rwip::{TASK_APP, TASK_GAPM},
 };
 
 pub use crate::bindings::{
     custs1_db_cfg as Custs1DbCfg, gapm_operation_GAPM_PROFILE_TASK_ADD as GAPM_PROFILE_TASK_ADD,
-    KE_API_ID_TASK_ID_CUSTS1, KE_TASK_TYPE_TASK_APP as TASK_APP,
-    KE_TASK_TYPE_TASK_GAPM as TASK_GAPM,
+    KE_API_ID_TASK_ID_CUSTS1,
 };
 
 #[no_mangle]

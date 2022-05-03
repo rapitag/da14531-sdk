@@ -1,12 +1,12 @@
 use rtt_target::rprintln;
 
-use crate::{
-    app_modules::KeApiId,
-    bindings::{cust_prf_func_callbacks as CustPrfFuncCallbacks, KE_API_ID_TASK_ID_INVALID},
-};
+pub use crate::bindings::{cust_prf_func_callbacks as CustPrfFuncCallbacks, prf_func_callbacks as PrfFuncCallbacks};
 
+use crate::{app_modules::KeApiId, platform::core_modules::rwip::TASK_ID_INVALID};
+
+#[cfg(feature = "ble_custom_server")]
 extern "C" {
-    static cust_prf_funcs: [CustPrfFuncCallbacks; 2];
+    pub static cust_prf_funcs: [CustPrfFuncCallbacks; 2];
 }
 
 #[no_mangle]
@@ -16,7 +16,7 @@ pub extern "C" fn custs_get_func_callbacks(task_id: KeApiId) -> *const CustPrfFu
         if pfcb.task_id == task_id {
             rprintln!("Found custs func callbacks for: 0x{:02x}", task_id);
             return pfcb as *const _ as *const CustPrfFuncCallbacks;
-        } else if pfcb.task_id == KE_API_ID_TASK_ID_INVALID {
+        } else if pfcb.task_id == TASK_ID_INVALID {
             break;
         }
     }

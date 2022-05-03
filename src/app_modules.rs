@@ -1,7 +1,8 @@
 pub use crate::bindings::{
-    app_env, app_prf_srv_perm_t as AppPrfSrvPerm, prf_func_uint8_t, prf_func_validate_t,
-    prf_func_void_t, process_event_response as ProcessEventResponse, timer_hnd as TimerHandle,
-    APP_MSG as AppMsg, EASY_TIMER_INVALID_TIMER,
+    advertise_configuration as AdvertiseConfiguration, app_env,
+    app_prf_srv_perm_t as AppPrfSrvPerm, app_prf_srv_sec_t as AppPrfSrvSec, prf_func_uint8_t,
+    prf_func_validate_t, prf_func_void_t, process_event_response as ProcessEventResponse,
+    timer_hnd as TimerHandle, APP_MSG as AppMsg, EASY_TIMER_INVALID_TIMER, PRFS_TASK_ID_MAX,
 };
 
 use crate::{
@@ -12,10 +13,35 @@ use crate::{
     },
 };
 
+pub mod app;
+pub mod app_common;
 pub mod app_custs;
+pub mod app_task;
+pub mod msg_utils;
 pub mod timer;
 
 pub type TimerCallback = unsafe extern "C" fn();
+
+pub const fn zero_app_prf_srv_sec() -> AppPrfSrvSec {
+    AppPrfSrvSec { task_id: 0, perm: 0 }
+}
+
+#[inline]
+pub fn append_device_name(
+    scan_data_len: &mut u8,
+    name_len: usize,
+    scan_data: &mut [u8],
+    name: &[u8],
+) {
+    unsafe {
+        crate::bindings::append_device_name(
+            scan_data_len,
+            name_len as u8,
+            scan_data.as_mut_ptr(),
+            name.as_ptr() as *const cty::c_void,
+        );
+    }
+}
 
 #[inline]
 pub fn app_env_get_conidx(conidx: u8) -> u8 {
@@ -84,11 +110,4 @@ pub fn default_app_on_init() {
 #[inline]
 pub fn get_user_prf_srv_perm(task_id: KeApiId) -> AppPrfSrvPerm {
     unsafe { crate::bindings::get_user_prf_srv_perm(task_id) }
-}
-
-pub mod msg_utils {
-    #[inline]
-    pub fn app_check_ble_active() -> bool {
-        unsafe { crate::bindings::app_check_BLE_active() }
-    }
 }

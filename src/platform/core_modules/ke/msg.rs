@@ -11,7 +11,7 @@ impl<const ID: u32, const SIZE: u16, T> KernelMessage<ID, SIZE, T> {
                 ID as u16,
                 dest_id,
                 src_id,
-                core::mem::size_of::<Self>() as u16 + SIZE,
+                core::mem::size_of::<T>() as u16 + SIZE,
             ) as *mut T
         };
 

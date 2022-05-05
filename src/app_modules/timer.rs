@@ -7,7 +7,8 @@ use crate::{
         arch::arch_ble_force_wakeup,
         core_modules::{
             ke::{
-                msg::{kernel_msg_type, KeMsgId, KeMsgStatusTag, KeTaskId, KernelMessage},
+                msg::{kernel_msg_type, KeMsgId, KeMsgStatusTag, KernelMessage},
+                task::KeTaskId,
                 timer::{ke_timer_clear, ke_timer_set},
             },
             rwip::TASK_APP,
@@ -137,7 +138,7 @@ impl AppTimer {
 
         if *callback != TimerState::None && *callback != TimerState::Modified {
             // Remove the timer from the timer queue
-            ke_timer_clear(timer_handle_to_msg_id(self.0), TASK_APP);
+            ke_timer_clear(timer_handle_to_msg_id(self.0), TASK_APP as u16);
 
             unsafe {
                 TIMER_CALLBACKS[timer_idx] = TimerState::Canceled;
@@ -150,7 +151,7 @@ impl AppTimer {
                 the message queue or not. Therefore a message must be sent to the kernel and
                 inform it about the requested cancel operation.
             */
-            let mut msg = KeMsgCancelAppTimerParams::new(TASK_APP, TASK_APP);
+            let mut msg = KeMsgCancelAppTimerParams::new(TASK_APP as u16, TASK_APP as u16);
 
             msg.fields().handle = self.0;
 
@@ -210,7 +211,7 @@ pub unsafe extern "C" fn app_timer_api_process_handler(
 
 #[inline]
 fn create_timer_handler(handle: TimerHandle, delay: u32) -> KeMsgStatusTag {
-    ke_timer_set(timer_handle_to_msg_id(handle), TASK_APP, delay);
+    ke_timer_set(timer_handle_to_msg_id(handle), TASK_APP as u16, delay);
     KeMsgStatusTag::KE_MSG_CONSUMED
 }
 
@@ -222,7 +223,7 @@ fn cancel_timer_handler(handle: TimerHandle) -> KeMsgStatusTag {
         *callback = TimerState::None;
         //         modified_timer_callbacks[i] = NULL;
     } else if *callback == TimerState::Modified {
-        let mut msg = KeMsgModifyAppTimerParams::new(TASK_APP, TASK_APP);
+        let mut msg = KeMsgModifyAppTimerParams::new(TASK_APP as u16, TASK_APP as u16);
         msg.fields().handle = handle;
         //         req->delay = param->delay;
         msg.send();
@@ -250,7 +251,6 @@ fn cancel_timer_handler(handle: TimerHandle) -> KeMsgStatusTag {
 // }
 
 fn call_timer_callback_handler(handle: TimerHandle) -> KeMsgStatusTag {
-    rtt_target::rprintln!("call_timer_callback_handler(0x{:02x})", handle);
     let callback = unsafe { &mut TIMER_CALLBACKS[timer_handle_to_index(handle)] };
 
     if *callback != TimerState::Canceled && *callback != TimerState::Modified {
@@ -266,11 +266,11 @@ fn call_timer_callback_handler(handle: TimerHandle) -> KeMsgStatusTag {
 fn create_timer(delay: u32, handle: TimerHandle) {
     if app_check_ble_active() {
         let msg_id = timer_handle_to_msg_id(handle);
-        ke_timer_set(msg_id, TASK_APP, delay);
+        ke_timer_set(msg_id, TASK_APP as u16, delay);
     } else {
         arch_ble_force_wakeup();
 
-        let mut msg = KeMsgCreateAppTimerParams::new(TASK_APP, TASK_APP);
+        let mut msg = KeMsgCreateAppTimerParams::new(TASK_APP as u16, TASK_APP as u16);
 
         msg.fields().delay = delay;
         msg.fields().handle = handle;

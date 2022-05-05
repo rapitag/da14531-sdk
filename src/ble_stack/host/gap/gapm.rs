@@ -10,10 +10,13 @@ pub mod task {
         gapm_operation_GAPM_ADV_UNDIRECT as GAPM_ADV_UNDIRECT,
         gapm_operation_GAPM_CONNECTION_DIRECT as GAPM_CONNECTION_DIRECT,
         gapm_operation_GAPM_CONNECTION_NAME_REQUEST as GAPM_CONNECTION_NAME_REQUEST,
+        gapm_operation_GAPM_SET_DEV_CONFIG as GAPM_SET_DEV_CONFIG,
         gapm_profile_task_add_cmd as GapmProfileTaskAdd,
         gapm_set_dev_config_cmd as GapmSetDevConfigCmd,
         gapm_start_advertise_cmd as GapmStartAdvertiseCmd,
         gapm_start_connection_cmd as GapmStartConnectionCmd,
+        gapm_att_cfg_flag_GAPM_MASK_ATT_SVC_CHG_EN as GAPM_MASK_ATT_SVC_CHG_EN
+        
     };
 
     use crate::platform::core_modules::ke::msg::kernel_msg_type;

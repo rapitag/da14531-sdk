@@ -1,4 +1,6 @@
 pub use crate::bindings::{
+    adv_channel_map_ADV_ALL_CHNLS_EN as ADV_ALL_CHNLS_EN,
+    adv_filter_policy_ADV_ALLOW_SCAN_ANY_CON_ANY as ADV_ALLOW_SCAN_ANY_CON_ANY,
     adv_filter_policy_ADV_ALLOW_SCAN_ANY_CON_WLST as ADV_ALLOW_SCAN_ANY_CON_WLST,
     bd_addr as BDAddr, co_list as CoList, co_list_hdr as CoListHdr, ADV_DATA_LEN, KEY_LEN,
     SCAN_RSP_DATA_LEN,

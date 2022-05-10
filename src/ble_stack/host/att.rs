@@ -1,3 +1,6 @@
-pub use crate::bindings::{ATT_DESC_CLIENT_CHAR_CFG, ATT_UUID_16_LEN};
+pub use crate::bindings::{
+    ATT_DECL_CHARACTERISTIC, ATT_DECL_PRIMARY_SERVICE, ATT_DESC_CHAR_USER_DESCRIPTION,
+    ATT_DESC_CLIENT_CHAR_CFG, ATT_UUID_16_LEN,
+};
 
 pub mod attm;

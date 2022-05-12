@@ -10,3 +10,5 @@ pub mod app_modules;
 pub mod ble_stack;
 pub mod platform;
 pub mod stdlib;
+
+pub use paste::paste;

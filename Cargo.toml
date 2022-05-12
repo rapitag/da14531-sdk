@@ -5,15 +5,50 @@ version = "0.1.0"
 
 [dependencies]
 cty = "0.2.2"
+da14531-sdk-macros = {path = "../da14531-sdk-macros"}
 paste = "1.0.7"
 rtt-target = "0.3.1"
 
 [build-dependencies]
 bindgen = "0.59.2"
+cc = "1.0"
 lazy_static = "1.4.0"
 
 [features]
-default = ["ble_custom_server1"]
+default = [
+  "custom_rest_evt_cb",
+  "address_mode_public",
+  "profile_dis_server",
+  "profile_custom_server1",
+]
 
-ble_custom_server1 = []
-ble_custom_server2 = []
+# Custom REST event callback
+custom_rest_evt_cb = []
+
+# BLE address modes
+address_mode_public = []
+address_mode_static = []
+
+# BLE profiles
+ble_client_profiles = []
+ble_server_profiles = []
+profile_anc_client = ["ble_client_profiles"]
+profile_batt_server = ["ble_server_profiles"]
+profile_bcs_server = ["ble_server_profiles"]
+profile_bms_server = ["ble_server_profiles"]
+profile_cts_client = ["ble_client_profiles"]
+profile_cts_server = ["ble_server_profiles"]
+profile_custom_server = []
+profile_custom_server1 = ["ble_server_profiles", "profile_custom_server"]
+profile_custom_server2 = ["ble_server_profiles", "profile_custom_server"]
+profile_dis_server = ["ble_server_profiles"]
+profile_findme_locator = ["ble_client_profiles"]
+profile_findme_target = ["ble_server_profiles"]
+profile_gatt_client = ["ble_client_profiles"]
+profile_prox_reporter = ["ble_server_profiles"]
+profile_suota_receiver = ["ble_server_profiles"]
+profile_uds_server = ["ble_server_profiles"]
+profile_wss_server = ["ble_server_profiles"]
+
+# Other features
+exclude_dlg_timer = []

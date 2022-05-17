@@ -10,11 +10,6 @@ use crate::{
 };
 
 #[no_mangle]
-pub extern "C" fn app_custs2_init() {
-    // Nothing to do
-}
-
-#[no_mangle]
 pub extern "C" fn app_custs2_create_db() {
     const SIZE: u16 = core::mem::size_of::<Custs2DbCfg>() as u16;
     let mut msg = KeMsgDynGapmProfileTaskAdd::<SIZE>::new(TASK_APP as u16, TASK_GAPM as u16);

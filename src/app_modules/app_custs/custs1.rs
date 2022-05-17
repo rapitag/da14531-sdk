@@ -6,13 +6,6 @@ use crate::{
     platform::{core_modules::rwip::{TASK_APP, TASK_GAPM, TASK_ID_CUSTS1}},
 };
 
-
-#[no_mangle]
-pub extern "C" fn app_custs1_init() {
-    rprintln!("app_custs1_init");
-    // Nothing to do
-}
-
 #[no_mangle]
 pub extern "C" fn app_custs1_create_db() {
     rprintln!("app_custs1_create_db");

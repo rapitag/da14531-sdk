@@ -87,15 +87,10 @@ lazy_static! {
     static ref SDK_SOURCES: Vec<&'static str> = vec![
         "/sdk/app_modules/src/app_common/app_msg_utils.c",
         "/sdk/app_modules/src/app_common/app_task.c",
-        // "/sdk/app_modules/src/app_common/app.c",
         "/sdk/app_modules/src/app_custs/app_customs_task.c",
-        // "/sdk/app_modules/src/app_custs/app_customs.c",
         "/sdk/app_modules/src/app_default_hnd/app_default_handlers.c",
-        "/sdk/app_modules/src/app_diss/app_diss_task.c",
-        "/sdk/app_modules/src/app_diss/app_diss.c",
         "/sdk/app_modules/src/app_entry/app_entry_point.c",
         "/sdk/ble_stack/profiles/custom/custs/src/custs1_task.c",
-        // "/sdk/ble_stack/profiles/custom/custs/src/custs1.c",
         "/sdk/ble_stack/profiles/prf.c",
         "/sdk/ble_stack/rwble/rwble.c",
         "/sdk/platform/arch/boot/system_DA14531.c",
@@ -128,12 +123,7 @@ lazy_static! {
     ];
 
 
-    static ref SDK_SOURCES_ASM: Vec<&'static str> = vec![
-    ];
-
-
     static ref C_PROJ_SOURCES: Vec<&'static str> = vec![
-        // "src/ble_stack/profiles/custom/custs/custs1.c",
     ];
 
 }
@@ -188,8 +178,7 @@ fn generate_user_modules_config() {
 
     let header = format!(
         "
-#ifndef _USER_MODULES_CONFIG_H_
-#define _USER_MODULES_CONFIG_H_
+#pragma once
 
 #define EXCLUDE_DLG_GAP             (0)
 #define EXCLUDE_DLG_TIMER           (0)
@@ -202,14 +191,49 @@ fn generate_user_modules_config() {
 #define EXCLUDE_DLG_FINDT           ({exclude_dlg_findt})
 #define EXCLUDE_DLG_SUOTAR          ({exclude_dlg_suotar})
 #define EXCLUDE_DLG_CUSTS1          ({exclude_dlg_custs1})
-#define EXCLUDE_DLG_CUSTS2          ({exclude_dlg_custs2})
-
-#endif // _USER_MODULES_CONFIG_H_
-    "
+#define EXCLUDE_DLG_CUSTS2          ({exclude_dlg_custs2})"
     );
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     std::fs::write(out_path.join("user_modules_config.h"), header).unwrap();
+}
+
+fn generate_user_profiles_config() {
+    let mut header = String::from("#pragma once\n");
+
+    if cfg!(feature = "profile_custom_server1") {
+        header += "#define CFG_PRF_CUST1\n";
+    };
+    if cfg!(feature = "profile_custom_server2") {
+        header += "#define CFG_PRF_CUST2\n";
+    };
+
+    if cfg!(feature = "profile_dis_server") {
+        header += "#define CFG_PRF_DISS\n";
+    };
+
+    if cfg!(feature = "profile_prox_reporter") {
+        header += "#define CFG_PRF_PXPR\n";
+    };
+
+    if cfg!(feature = "profile_batt_server") {
+        header += "#define CFG_PRF_BASS\n";
+    };
+
+    if cfg!(feature = "profile_suota_receiver") {
+        header += "#define CFG_PRF_SUOTAR\n";
+    };
+
+    if cfg!(feature = "profile_findme_target") {
+        header += "#define CFG_PRF_FMPT\n";
+    };
+
+    if cfg!(feature = "profile_findme_locator") {
+        header += "#define CFG_PRF_FMPL\n";
+    };
+
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    std::fs::write(out_path.join("user_profiles_config.h"), header).unwrap();
 }
 
 fn generate_user_callback_config() {
@@ -226,33 +250,76 @@ extern void __catch_rest_hndl(ke_msg_id_t const msgid,
 
     let header = format!(
         "
-#ifndef _USER_CALLBACK_CONFIG_H_
-#define _USER_CALLBACK_CONFIG_H_
-
+#pragma once
 
 #include <stdio.h>
 #include \"app_callback.h\"
 #include \"app_default_handlers.h\"
 #include \"app_entry_point.h\"
 #include \"app_prf_types.h\"
-#include \"user_peripheral.h\"
-
 
 extern const struct app_callbacks user_app_callbacks;
 extern const struct default_app_operations user_default_app_operations;
 extern const struct arch_main_loop_callbacks user_app_main_loop_callbacks;
 
-{app_process_catch_rest_cb}
-
-#endif // _USER_CALLBACK_CONFIG_H_"
+{app_process_catch_rest_cb}"
     );
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     std::fs::write(out_path.join("user_callback_config.h"), header).unwrap();
 }
 
+fn generate_user_config() {
+    #[cfg(all(feature = "address_mode_public", feature = "address_mode_static"))]
+    compile_error!("Only one address mode featzre flag can be set!");
+
+    let address_mode = if cfg!(feature = "address_mode_public") {
+        "APP_CFG_ADDR_PUB"
+    } else if cfg!(feature = "address_mode_static") {
+        "APP_CFG_ADDR_STATIC"
+    } else {
+        panic!("One address mode feature flag has to be set!");
+    };
+
+    #[cfg(any(
+        all(feature = "sleep_mode_off", feature = "sleep_mode_ext_on"),
+        all(feature = "sleep_mode_off", feature = "sleep_mode_ext_otp_copy_on"),
+        all(feature = "sleep_mode_ext_on", feature = "sleep_mode_ext_otp_copy_on")
+    ))]
+    compile_error!("Only one sleep mode feature flag can be set!");
+
+    let sleep_mode = if cfg!(feature = "sleep_mode_off") {
+        "ARCH_SLEEP_OFF"
+    } else if cfg!(feature = "sleep_mode_ext_on") {
+        "ARCH_EXT_SLEEP_ON"
+    } else if cfg!(feature = "sleep_mode_ext_otp_copy_on") {
+        "ARCH_EXT_SLEEP_OTP_COPY_ON"
+    } else {
+        panic!("One sleep mode feature flag has to be set!");
+    };
+
+    let header = format!(
+        "
+#pragma once
+
+#include \"app_user_config.h\"
+#include \"arch_api.h\"
+#include \"app_default_handlers.h\"
+#include \"app_adv_data.h\"
+#include \"co_bt.h\"
+
+#define USER_CFG_ADDRESS_MODE {address_mode}
+#define USER_CFG_CNTL_PRIV_MODE APP_CFG_CNTL_PRIV_MODE_NETWORK
+static const sleep_state_t app_default_sleep_mode = {sleep_mode};
+
+extern const struct default_handlers_configuration user_default_hnd_conf;"
+    );
+
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    std::fs::write(out_path.join("user_config.h"), header).unwrap();
+}
+
 fn setup_build() -> (
-    Vec<String>,
     Vec<String>,
     Vec<String>,
     Vec<String>,
@@ -266,9 +333,6 @@ fn setup_build() -> (
 
     #[allow(unused_mut)]
     let mut sdk_sources: Vec<_> = SDK_SOURCES.clone();
-
-    #[allow(unused_mut)]
-    let mut sdk_sources_asm: Vec<_> = SDK_SOURCES_ASM.clone();
 
     let mut defines = vec![("__DA14531__", None)];
 
@@ -349,11 +413,6 @@ fn setup_build() -> (
         .chain(C_PROJ_SOURCES.iter().map(|s| s.to_string()))
         .collect();
 
-    let sdk_sources_asm: Vec<_> = sdk_sources_asm
-        .iter()
-        .map(|path| format!("{}{}", sdk_path, path))
-        .collect();
-
     let defines: Vec<_> = defines
         .iter()
         .map(|(key, value)| (key.to_string(), value.map(|value| value.to_string())))
@@ -363,7 +422,6 @@ fn setup_build() -> (
         include_dirs,
         include_files,
         sdk_sources,
-        sdk_sources_asm,
         defines,
     )
 }
@@ -416,7 +474,6 @@ fn compile_sdk(
     include_files: &Vec<String>,
     defines: &Vec<(String, Option<String>)>,
     sdk_sources: &Vec<String>,
-    _sdk_sources_asm: &Vec<String>,
 ) {
     let mut cc_builder = cc::Build::new();
 
@@ -448,10 +505,12 @@ fn compile_sdk(
 }
 
 fn main() {
-    let (include_dirs, include_files, sdk_sources, sdk_sources_asm, defines) = setup_build();
+    let (include_dirs, include_files, sdk_sources, defines) = setup_build();
 
+    generate_user_config();
     generate_user_callback_config();
     generate_user_modules_config();
+    generate_user_profiles_config();
 
     generate_bindings(
         &include_dirs,
@@ -459,7 +518,6 @@ fn main() {
         &defines,
         &vec![
             "hl_err",
-            "ke_msg_status_tag",
             "process_event_response",
             "syscntl_dcdc_level_t",
             "APP_MSG",
@@ -471,7 +529,6 @@ fn main() {
         &include_files,
         &defines,
         &sdk_sources,
-        &sdk_sources_asm,
     );
 
     println!("cargo:rerun-if-changed=bindings.h");

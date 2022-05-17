@@ -1,0 +1,6 @@
+{
+    "rust-analyzer.server.extraEnv": {
+        "SDK_PATH": "/home/harry/Development/rapitag/dialog/6.0.16.1144",
+        "CONFIG_PATH": "/home/harry/Development/rapitag/dialog-rust/ble_app_peripheral/src/config"
+    }
+}

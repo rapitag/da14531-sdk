@@ -7,7 +7,7 @@ use crate::{
         arch::arch_ble_force_wakeup,
         core_modules::{
             ke::{
-                msg::{kernel_msg_type, KeMsgId, KeMsgStatusTag, KernelMessage},
+                msg::{kernel_msg_type, KeMsgId, KE_MSG_CONSUMED, KernelMessage, KeMsgStatusTag},
                 task::KeTaskId,
                 timer::{ke_timer_clear, ke_timer_set},
             },
@@ -212,7 +212,7 @@ pub unsafe extern "C" fn app_timer_api_process_handler(
 #[inline]
 fn create_timer_handler(handle: TimerHandle, delay: u32) -> KeMsgStatusTag {
     ke_timer_set(timer_handle_to_msg_id(handle), TASK_APP as u16, delay);
-    KeMsgStatusTag::KE_MSG_CONSUMED
+    KE_MSG_CONSUMED
 }
 
 fn cancel_timer_handler(handle: TimerHandle) -> KeMsgStatusTag {
@@ -228,7 +228,7 @@ fn cancel_timer_handler(handle: TimerHandle) -> KeMsgStatusTag {
         //         req->delay = param->delay;
         msg.send();
     }
-    KeMsgStatusTag::KE_MSG_CONSUMED
+    KE_MSG_CONSUMED
 }
 
 // fn modify_timer_handler(handle: TimerHandle, delay: u32) -> KeMsgStatusTag {
@@ -260,7 +260,7 @@ fn call_timer_callback_handler(handle: TimerHandle) -> KeMsgStatusTag {
         }
     }
 
-    KeMsgStatusTag::KE_MSG_CONSUMED
+    KE_MSG_CONSUMED
 }
 
 fn create_timer(delay: u32, handle: TimerHandle) {

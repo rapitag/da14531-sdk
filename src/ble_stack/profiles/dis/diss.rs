@@ -1,0 +1,15 @@
+pub use crate::bindings::{
+    diss_db_cfg as DissDbCfg, diss_features_DIS_FIRM_REV_STR_CHAR_SUP as DIS_FIRM_REV_STR_CHAR_SUP,
+    diss_features_DIS_MANUFACTURER_NAME_CHAR_SUP as DIS_MANUFACTURER_NAME_CHAR_SUP,
+    diss_features_DIS_MODEL_NB_STR_CHAR_SUP as DIS_MODEL_NB_STR_CHAR_SUP,
+    diss_features_DIS_PNP_ID_CHAR_SUP as DIS_PNP_ID_CHAR_SUP,
+    diss_features_DIS_SW_REV_STR_CHAR_SUP as DIS_SW_REV_STR_CHAR_SUP,
+    diss_features_DIS_SYSTEM_ID_CHAR_SUP as DIS_SYSTEM_ID_CHAR_SUP,
+    diss_info_DIS_MANUFACTURER_NAME_CHAR as DIS_MANUFACTURER_NAME_CHAR,
+    diss_info_DIS_MODEL_NB_STR_CHAR as DIS_MODEL_NB_STR_CHAR,
+    diss_info_DIS_PNP_ID_CHAR as DIS_PNP_ID_CHAR,
+    diss_info_DIS_SW_REV_STR_CHAR as DIS_SW_REV_STR_CHAR,
+    diss_info_DIS_SYSTEM_ID_CHAR as DIS_SYSTEM_ID_CHAR,
+};
+
+pub mod task;

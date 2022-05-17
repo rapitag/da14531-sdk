@@ -1,4 +1,7 @@
-pub use crate::bindings::{ke_msg_id_t as KeMsgId, ke_msg_status_tag as KeMsgStatusTag};
+pub use crate::bindings::{
+    ke_msg_handler as KeMsgHandler, ke_msg_id_t as KeMsgId, ke_msg_status_tag as KeMsgStatusTag,
+    ke_msg_status_tag_KE_MSG_CONSUMED as KE_MSG_CONSUMED,
+};
 
 use crate::bindings::{ke_msg_alloc, ke_msg_send};
 

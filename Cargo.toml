@@ -5,7 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 cty = "0.2.2"
-da14531-sdk-macros = {path = "../da14531-sdk-macros"}
+da14531-sdk-macros = {git = "ssh://git@ssh.dev.azure.com/v3/rapitag/da14531-sdk-macros/da14531-sdk-macros"}
 paste = "1.0.7"
 rtt-target = "0.3.1"
 
@@ -17,6 +17,7 @@ lazy_static = "1.4.0"
 [features]
 default = [
   "custom_rest_evt_cb",
+  "sleep_mode_off",
   "address_mode_public",
   "profile_dis_server",
   "profile_custom_server1",
@@ -24,6 +25,11 @@ default = [
 
 # Custom REST event callback
 custom_rest_evt_cb = []
+
+# Sleep modes
+sleep_mode_ext_on = []
+sleep_mode_ext_otp_copy_on = []
+sleep_mode_off = []
 
 # BLE address modes
 address_mode_public = []

@@ -326,7 +326,6 @@ fn setup_build() -> (
     Vec<(String, Option<String>)>,
 ) {
     let sdk_path = env::var("SDK_PATH").expect("SDK_PATH not set!");
-    let config_path = env::var("CONFIG_PATH").expect("CONFIG_PATH not set!");
 
     #[allow(unused_mut)]
     let mut include_dirs = INCLUDE_PATHS.clone();
@@ -394,10 +393,7 @@ fn setup_build() -> (
         .collect();
 
     include_dirs.push("./include".to_string());
-    include_dirs.push(format!("{}/..", config_path));
     include_dirs.push(env::var("OUT_DIR").unwrap());
-
-    include_dirs.push(config_path);
 
     let mut include_files: Vec<_> = include_files
         .iter()
@@ -437,6 +433,7 @@ fn generate_bindings(
         .ctypes_prefix("cty")
         .use_core()
         .size_t_is_usize(true)
+        .clang_arg("-D__SOFTFP__")
         .clang_arg("-DUSER_DEVICE_NAME_LEN=0")
         .clang_arg("-I/usr/lib/newlib-nano/arm-none-eabi/include")
         .clang_arg("-Wno-expansion-to-defined");
@@ -534,19 +531,9 @@ fn main() {
     println!("cargo:rerun-if-changed=bindings.h");
     println!("cargo:rerun-if-changed=build.rs");
 
-    let config_path = env::var("CONFIG_PATH").expect("CONFIG_PATH not set!");
     println!("cargo:rerun-if-changed=include/da1458x_config_basic.h");
     println!("cargo:rerun-if-changed=include/da1458x_config_advanced.h",);
     println!("cargo:rerun-if-changed=include/user_periph_setup.h",);
-    println!("cargo:rerun-if-changed={}/user_config.h", config_path);
-    println!(
-        "cargo:rerun-if-changed={}/user_callback_config.h",
-        config_path
-    );
-    println!(
-        "cargo:rerun-if-changed={}/user_profiles_config.h",
-        config_path
-    );
 
     for c_proj_source in C_PROJ_SOURCES.iter() {
         println!("cargo:rerun-if-changed={}", c_proj_source);

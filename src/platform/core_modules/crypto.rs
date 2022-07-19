@@ -48,3 +48,10 @@ pub fn aes_operation_sync(
         _ => AesResult::UnkownResult,
     }
 }
+
+#[inline]
+pub fn aes_init(reset: bool) {
+    unsafe {
+        crate::bindings::aes_init(reset, None);
+    }
+}

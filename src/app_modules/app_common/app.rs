@@ -39,12 +39,6 @@ use crate::{
     },
 };
 
-#[cfg(feature = "profile_custom_server1")]
-use crate::app_modules::app_custs::custs1::{app_custs1_create_db, app_custs1_init};
-
-#[cfg(feature = "profile_custom_server2")]
-use crate::app_modules::app_custs::custs2::{app_custs2_create_db, app_custs2_init};
-
 #[cfg(feature = "address_mode_public")]
 use crate::app_modules::APP_CFG_ADDR_PUB;
 
@@ -91,7 +85,6 @@ macro_rules! prf_func_callbacks_size {
         cfg!(feature = $head) as usize + prf_func_callbacks_size!($($tail)*)
     };
 }
-
 
 const PRF_FUNCS: [PrfFuncCallbacks;
     prf_func_callbacks_size!(
@@ -286,7 +279,7 @@ configure_user_scan_response_data!();
 #[cfg(feature = "profile_custom_server")]
 #[no_mangle]
 pub extern "C" fn custs_get_func_callbacks(task_id: KeApiId) -> *const CustPrfFuncCallbacks {
-    rprintln!("custs_get_func_callbacks({})", task_id);
+    // rprintln!("custs_get_func_callbacks({})", task_id);
     for pfcb in unsafe { CUST_PRF_FUNCS } {
         if pfcb.task_id == task_id {
             return &pfcb as *const _ as *const CustPrfFuncCallbacks;
@@ -331,7 +324,7 @@ fn app_task_in_user_app(task_id: KeApiId) -> bool {
 
 #[no_mangle]
 pub extern "C" fn app_db_init_next() -> bool {
-    rprintln!("app_db_init_next");
+    // rprintln!("app_db_init_next");
     let extract_cb = |user_prf_func: &PrfFuncCallbacks| user_prf_func.db_create_func;
 
     let callbacks = USER_PRF_FUNCS.iter().filter_map(extract_cb).chain(
@@ -355,7 +348,7 @@ pub extern "C" fn app_db_init_next() -> bool {
 
 #[no_mangle]
 pub extern "C" fn app_prf_enable(conidx: u8) {
-    rprintln!("app_prf_enable");
+    // rprintln!("app_prf_enable");
 
     let extract_cb = |user_prf_func: &PrfFuncCallbacks| user_prf_func.enable_func;
 
@@ -537,6 +530,11 @@ pub extern "C" fn app_init() {
 pub fn app_easy_gap_undirected_advertise_start() {
     app_easy_gap_undirected_advertise_start_create_msg().send();
     ke_state_set(TASK_APP as u16, APP_CONNECTABLE as u8);
+}
+
+#[inline]
+pub fn app_easy_gap_advertise_stop() {
+    unsafe { crate::bindings::app_easy_gap_advertise_stop() }
 }
 
 // #[inline]

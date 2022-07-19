@@ -12,3 +12,7 @@ pub mod platform;
 pub mod stdlib;
 
 pub use paste::paste;
+
+#[cfg(debug_assertions)]
+#[no_mangle]
+pub extern "C" fn GPIO_reservations() {}

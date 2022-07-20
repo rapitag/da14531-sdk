@@ -77,13 +77,11 @@ lazy_static! {
         "/third_party/hash",
         "/third_party/irng",
     ];
-
     static ref CONFIG_HEADERS: Vec<&'static str> = vec![
         "da1458x_config_basic.h",
         "da1458x_config_advanced.h",
         "user_config.h"
     ];
-
     static ref SDK_SOURCES: Vec<&'static str> = vec![
         "/sdk/app_modules/src/app_common/app_msg_utils.c",
         "/sdk/app_modules/src/app_common/app_task.c",
@@ -121,11 +119,7 @@ lazy_static! {
         "/sdk/platform/utilities/otp_cs/otp_cs.c",
         "/sdk/platform/utilities/otp_hdr/otp_hdr.c"
     ];
-
-
-    static ref C_PROJ_SOURCES: Vec<&'static str> = vec![
-    ];
-
+    static ref C_PROJ_SOURCES: Vec<&'static str> = vec![];
 }
 
 fn generate_user_modules_config() {
@@ -325,7 +319,7 @@ fn setup_build() -> (
     Vec<String>,
     Vec<(String, Option<String>)>,
 ) {
-    let sdk_path = env::var("SDK_PATH").expect("SDK_PATH not set!");
+    let sdk_path = env::var("SDK_PATH").unwrap_or("../sdk".into());
 
     #[allow(unused_mut)]
     let mut include_dirs = INCLUDE_PATHS.clone();
@@ -414,12 +408,7 @@ fn setup_build() -> (
         .map(|(key, value)| (key.to_string(), value.map(|value| value.to_string())))
         .collect();
 
-    (
-        include_dirs,
-        include_files,
-        sdk_sources,
-        defines,
-    )
+    (include_dirs, include_files, sdk_sources, defines)
 }
 
 fn generate_bindings(
@@ -521,12 +510,7 @@ fn main() {
         ],
     );
 
-    compile_sdk(
-        &include_dirs,
-        &include_files,
-        &defines,
-        &sdk_sources,
-    );
+    compile_sdk(&include_dirs, &include_files, &defines, &sdk_sources);
 
     println!("cargo:rerun-if-changed=bindings.h");
     println!("cargo:rerun-if-changed=build.rs");

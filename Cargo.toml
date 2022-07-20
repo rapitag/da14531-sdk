@@ -5,7 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 cty = "0.2.2"
-da14531-sdk-macros = {git = "ssh://git@ssh.dev.azure.com/v3/rapitag/da14531-sdk-macros/da14531-sdk-macros"}
+da14531-sdk-macros = {path = "../da14531-sdk-macros"}
 paste = "1.0.7"
 rtt-target = "0.3.1"
 

@@ -428,6 +428,7 @@ fn generate_bindings(
         .clang_arg("-D__SOFTFP__")
         .clang_arg("-DUSER_DEVICE_NAME_LEN=0")
         .clang_arg("-I/Applications/ARM/arm-none-eabi/include")
+        .clang_arg("-I/usr/lib/newlib-nano/arm-none-eabi/include")
         .clang_arg("-Wno-expansion-to-defined");
 
     for (key, value) in defines {

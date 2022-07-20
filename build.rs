@@ -386,7 +386,10 @@ fn setup_build() -> (
         .map(|path| format!("{}{}", sdk_path, path))
         .collect();
 
-    include_dirs.push("./include".to_string());
+    include_dirs.push(format!(
+        "{}/include",
+        env::current_dir().unwrap().to_str().unwrap()
+    ));
     include_dirs.push(env::var("OUT_DIR").unwrap());
 
     let mut include_files: Vec<_> = include_files
@@ -424,7 +427,7 @@ fn generate_bindings(
         .size_t_is_usize(true)
         .clang_arg("-D__SOFTFP__")
         .clang_arg("-DUSER_DEVICE_NAME_LEN=0")
-        .clang_arg("-I/usr/lib/newlib-nano/arm-none-eabi/include")
+        .clang_arg("-I/Applications/ARM/arm-none-eabi/include")
         .clang_arg("-Wno-expansion-to-defined");
 
     for (key, value) in defines {

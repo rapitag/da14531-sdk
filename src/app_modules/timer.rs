@@ -1,3 +1,7 @@
+use core::mem;
+
+use alloc::boxed::Box;
+
 use crate::{
     bindings::{
         APP_MODULES_TIMER_API_LAST_MES, APP_MODULES_TIMER_API_MES0, APP_MODULES_TIMER_MAX_NUM,
@@ -7,7 +11,7 @@ use crate::{
         arch::arch_ble_force_wakeup,
         core_modules::{
             ke::{
-                msg::{kernel_msg_type, KeMsgId, KE_MSG_CONSUMED, KernelMessage, KeMsgStatusTag},
+                msg::{kernel_msg_type, KeMsgId, KeMsgStatusTag, KernelMessage, KE_MSG_CONSUMED},
                 task::KeTaskId,
                 timer::{ke_timer_clear, ke_timer_set},
             },
@@ -28,9 +32,9 @@ kernel_msg_type!(private, Create, AppTimerParams, MSG_APP_CREATE_TIMER);
 kernel_msg_type!(private, Modify, AppTimerParams, MSG_APP_MODIFY_TIMER);
 kernel_msg_type!(private, Cancel, AppTimerParams, MSG_APP_CANCEL_TIMER);
 
-pub type TimerCallback = fn();
+// pub type TimerCallback = fn();
+pub type TimerCallback = Box<dyn Fn()>;
 
-#[derive(PartialEq, Clone, Copy)]
 enum TimerState {
     None,
     Modified,
@@ -38,20 +42,31 @@ enum TimerState {
     Active(TimerCallback),
 }
 
-impl TimerState {
-    pub fn take_callback(&mut self) -> Option<TimerCallback> {
-        if let TimerState::Active(callback) = *self {
-            *self = TimerState::None;
-            Some(callback)
-        } else {
-            None
+impl PartialEq for TimerState {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Active(l0), Self::Active(r0)) => true,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
     }
 }
 
+impl TimerState {
+    pub fn take_callback(&mut self) -> Option<TimerCallback> {
+        if let TimerState::Active(_) = self {
+            let current_state = mem::replace(self, TimerState::None);
+            if let TimerState::Active(callback) = current_state {
+                return Some(callback);
+            }
+        }
+        None
+    }
+}
+
+const INIT: TimerState = TimerState::None;
 #[link_section = "retention_mem_area0"]
 static mut TIMER_CALLBACKS: [TimerState; APP_MODULES_TIMER_MAX_NUM as usize] =
-    [TimerState::None; APP_MODULES_TIMER_MAX_NUM as usize];
+    [INIT; APP_MODULES_TIMER_MAX_NUM as usize];
 
 // #[link_section = "retention_mem_area0"]
 // static mut MODIFIED_TIMER_CALLBACKS: [TimerState; APP_MODULES_TIMER_MAX_NUM as usize] =

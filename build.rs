@@ -82,7 +82,7 @@ lazy_static! {
         "da1458x_config_advanced.h",
         "user_config.h"
     ];
-    static ref SDK_SOURCES: Vec<&'static str> = vec![
+    static ref SDK_C_SOURCES: Vec<&'static str> = vec![
         "/sdk/app_modules/src/app_common/app_msg_utils.c",
         "/sdk/app_modules/src/app_common/app_task.c",
         "/sdk/app_modules/src/app_custs/app_customs_task.c",
@@ -119,7 +119,10 @@ lazy_static! {
         "/sdk/platform/utilities/otp_cs/otp_cs.c",
         "/sdk/platform/utilities/otp_hdr/otp_hdr.c"
     ];
-    static ref C_PROJ_SOURCES: Vec<&'static str> = vec![];
+    static ref SDK_ASM_SOURCES: Vec<&'static str> = vec![
+        // "/sdk/platform/arch/boot/GCC/ivtable_DA14531.S",
+        // "/sdk/platform/arch/boot/GCC/startup_DA14531.S"
+    ];
 }
 
 fn generate_user_modules_config() {
@@ -317,6 +320,7 @@ fn setup_build() -> (
     Vec<String>,
     Vec<String>,
     Vec<String>,
+    Vec<String>,
     Vec<(String, Option<String>)>,
 ) {
     let sdk_path = env::var("SDK_PATH").unwrap_or("../sdk".into());
@@ -325,7 +329,7 @@ fn setup_build() -> (
     let mut include_dirs = INCLUDE_PATHS.clone();
 
     #[allow(unused_mut)]
-    let mut sdk_sources: Vec<_> = SDK_SOURCES.clone();
+    let mut sdk_c_sources: Vec<_> = SDK_C_SOURCES.clone();
 
     let mut defines = vec![("__DA14531__", None)];
 
@@ -356,7 +360,7 @@ fn setup_build() -> (
     {
         defines.push(("CFG_PRF_GATTC", None));
         include_dirs.push("/sdk/ble_stack/profiles/gatt/gatt_client/api");
-        sdk_sources.push("/sdk/app_modules/src/app_gattc/app_gattc.c");
+        sdk_c_sources.push("/sdk/app_modules/src/app_gattc/app_gattc.c");
     }
 
     #[cfg(feature = "profile_prox_reporter")]
@@ -400,10 +404,14 @@ fn setup_build() -> (
     let mut config_headers: Vec<_> = CONFIG_HEADERS.iter().map(|s| s.to_string()).collect();
     include_files.append(&mut config_headers);
 
-    let sdk_sources: Vec<_> = sdk_sources
+    let sdk_c_sources: Vec<_> = sdk_c_sources
         .iter()
         .map(|path| format!("{}{}", sdk_path, path))
-        .chain(C_PROJ_SOURCES.iter().map(|s| s.to_string()))
+        .collect();
+
+    let sdk_asm_sources: Vec<_> = SDK_ASM_SOURCES
+        .iter()
+        .map(|path| format!("{}{}", sdk_path, path))
         .collect();
 
     let defines: Vec<_> = defines
@@ -411,7 +419,13 @@ fn setup_build() -> (
         .map(|(key, value)| (key.to_string(), value.map(|value| value.to_string())))
         .collect();
 
-    (include_dirs, include_files, sdk_sources, defines)
+    (
+        include_dirs,
+        include_files,
+        sdk_c_sources,
+        sdk_asm_sources,
+        defines,
+    )
 }
 
 fn generate_bindings(
@@ -428,7 +442,8 @@ fn generate_bindings(
         .clang_arg("-D__SOFTFP__")
         .clang_arg("-DUSER_DEVICE_NAME_LEN=0")
         .clang_arg("-I/Applications/ARM/arm-none-eabi/include")
-        .clang_arg("-I/usr/lib/newlib-nano/arm-none-eabi/include")
+        .clang_arg("-I/usr/lib/gcc/arm-none-eabi/10.3.1/include")
+        .clang_arg("-I/usr/include/newlib")
         .clang_arg("-Wno-expansion-to-defined");
 
     for (key, value) in defines {
@@ -463,7 +478,8 @@ fn compile_sdk(
     include_dirs: &Vec<String>,
     include_files: &Vec<String>,
     defines: &Vec<(String, Option<String>)>,
-    sdk_sources: &Vec<String>,
+    sdk_c_sources: &Vec<String>,
+    sdk_asm_sources: &Vec<String>,
 ) {
     let mut cc_builder = cc::Build::new();
 
@@ -487,15 +503,20 @@ fn compile_sdk(
         cc_builder = cc_builder.define(key, value.as_ref().map(|v| v.as_str()));
     }
 
-    for file in sdk_sources {
+    for file in sdk_c_sources {
         cc_builder = cc_builder.file(file);
     }
 
-    cc_builder.compile("libsdk.a");
+    cc_builder.compile("sdk");
+
+    // cc::Build::new()
+    //     .files(sdk_asm_sources)
+    //     .define("__DA14531__", None)
+    //     .compile("boot");
 }
 
 fn main() {
-    let (include_dirs, include_files, sdk_sources, defines) = setup_build();
+    let (include_dirs, include_files, sdk_c_sources, sdk_asm_sources, defines) = setup_build();
 
     generate_user_config();
     generate_user_callback_config();
@@ -514,7 +535,13 @@ fn main() {
         ],
     );
 
-    compile_sdk(&include_dirs, &include_files, &defines, &sdk_sources);
+    compile_sdk(
+        &include_dirs,
+        &include_files,
+        &defines,
+        &sdk_c_sources,
+        &sdk_asm_sources,
+    );
 
     println!("cargo:rerun-if-changed=bindings.h");
     println!("cargo:rerun-if-changed=build.rs");
@@ -522,8 +549,4 @@ fn main() {
     println!("cargo:rerun-if-changed=include/da1458x_config_basic.h");
     println!("cargo:rerun-if-changed=include/da1458x_config_advanced.h",);
     println!("cargo:rerun-if-changed=include/user_periph_setup.h",);
-
-    for c_proj_source in C_PROJ_SOURCES.iter() {
-        println!("cargo:rerun-if-changed={}", c_proj_source);
-    }
 }

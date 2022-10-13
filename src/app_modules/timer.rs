@@ -45,7 +45,7 @@ enum TimerState {
 impl PartialEq for TimerState {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Active(l0), Self::Active(r0)) => true,
+            (Self::Active(_), Self::Active(_)) => true,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
     }

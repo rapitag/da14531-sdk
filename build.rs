@@ -94,7 +94,6 @@ lazy_static! {
         "/sdk/platform/arch/boot/system_DA14531.c",
         "/sdk/platform/arch/main/arch_main.c",
         "/sdk/platform/arch/main/arch_rom.c",
-        "/sdk/platform/arch/main/arch_rom.c",
         "/sdk/platform/arch/main/arch_sleep.c",
         "/sdk/platform/arch/main/arch_system.c",
         "/sdk/platform/arch/main/hardfault_handler.c",
@@ -442,7 +441,7 @@ fn generate_bindings(
         .clang_arg("-D__SOFTFP__")
         .clang_arg("-DUSER_DEVICE_NAME_LEN=0")
         .clang_arg("-I/Applications/ARM/arm-none-eabi/include")
-        .clang_arg("-I/usr/lib/gcc/arm-none-eabi/10.3.1/include")
+        .clang_arg("-I/usr/lib/gcc/arm-none-eabi/12.2.1/include")
         .clang_arg("-I/usr/include/newlib")
         .clang_arg("-Wno-expansion-to-defined");
 

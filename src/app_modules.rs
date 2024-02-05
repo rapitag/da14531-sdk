@@ -14,7 +14,7 @@ pub use crate::bindings::{
     PRFS_TASK_ID_MAX,
 };
 
-pub use da14531_sdk_macros::{default_handlers_configuration, register_app_callbacks};
+pub use da14531_sdk_macros::{default_handlers_configuration, register_app_callbacks, configure_device_information_service};
 
 use crate::{
     ble_stack::host::gap::gapc::task::GapcConnectionReqInd,
@@ -35,9 +35,6 @@ mod custom_rest_evt_cb;
 
 #[cfg(feature = "profile_custom_server")]
 pub mod app_custs;
-
-#[cfg(feature = "profile_dis_server")]
-pub mod app_diss;
 
 pub type TimerCallback = unsafe extern "C" fn();
 

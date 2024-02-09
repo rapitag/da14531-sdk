@@ -8,13 +8,16 @@ pub use crate::bindings::{
     default_handlers_configuration as DefaultHandlersConfiguration,
     default_security_request_scenario_DEF_SEC_REQ_NEVER as DEF_SEC_REQ_NEVER,
     default_security_request_scenario_DEF_SEC_REQ_ON_CONNECT as DEF_SEC_REQ_ON_CONNECT,
-    gapm_configuration as GapmConfiguration, prf_func_uint8_t, prf_func_validate_t,
-    prf_func_void_t, process_event_response as ProcessEventResponse, timer_hnd as TimerHandle,
-    APP_CFG_ADDR_PUB, APP_CFG_ADDR_STATIC, APP_MSG as AppMsg, EASY_TIMER_INVALID_TIMER,
-    PRFS_TASK_ID_MAX,
+    gapm_configuration as GapmConfiguration, prf_func_callbacks as PrfFuncCallbacks,
+    prf_func_uint8_t, prf_func_validate_t, prf_func_void_t,
+    process_event_response as ProcessEventResponse, timer_hnd as TimerHandle, APP_CFG_ADDR_PUB,
+    APP_CFG_ADDR_STATIC, APP_MSG as AppMsg, EASY_TIMER_INVALID_TIMER, PRFS_TASK_ID_MAX,
 };
 
-pub use da14531_sdk_macros::{default_handlers_configuration, register_app_callbacks, configure_device_information_service};
+pub use da14531_sdk_macros::{
+    configure_custom_server1_service, configure_device_information_service,
+    default_handlers_configuration, register_app_callbacks,
+};
 
 use crate::{
     ble_stack::host::gap::gapc::task::GapcConnectionReqInd,
@@ -30,7 +33,6 @@ pub mod app_task;
 pub mod msg_utils;
 pub mod timer;
 
-#[cfg(feature = "custom_rest_evt_cb")]
 mod custom_rest_evt_cb;
 
 #[cfg(feature = "profile_custom_server")]

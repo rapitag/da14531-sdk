@@ -233,17 +233,6 @@ fn generate_user_profiles_config() {
 }
 
 fn generate_user_callback_config() {
-    let app_process_catch_rest_cb = if cfg!(feature = "custom_rest_evt_cb") {
-        "
-extern void __catch_rest_hndl(ke_msg_id_t const msgid,
-                              void const *param,
-                              ke_task_id_t const dest_id,
-                              ke_task_id_t const src_id);
-#define app_process_catch_rest_cb       __catch_rest_hndl"
-    } else {
-        "static const catch_rest_event_func_t NULL;"
-    };
-
     let header = format!(
         "
 #pragma once
@@ -258,7 +247,11 @@ extern const struct app_callbacks user_app_callbacks;
 extern const struct default_app_operations user_default_app_operations;
 extern const struct arch_main_loop_callbacks user_app_main_loop_callbacks;
 
-{app_process_catch_rest_cb}"
+extern void app_process_catch_rest_cb(ke_msg_id_t const msgid,
+    void const *param,
+    ke_task_id_t const dest_id,
+    ke_task_id_t const src_id);
+" // {app_process_catch_rest_cb}"
     );
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());

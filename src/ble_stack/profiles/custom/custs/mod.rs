@@ -3,8 +3,6 @@ pub use crate::bindings::{
     prf_func_void_t as PrfFuncVoid, rom_cust_prf_cfg_t as RomCustPrfCfg,
 };
 
-pub use da14531_sdk_macros::service_database;
-
 use crate::platform::core_modules::rwip::KeApiId;
 
 #[cfg(feature = "profile_custom_server1")]

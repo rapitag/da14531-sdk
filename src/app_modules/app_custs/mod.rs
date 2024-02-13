@@ -1,6 +1,4 @@
-pub use crate::bindings::{
-    cust_prf_func_callbacks as CustPrfFuncCallbacks, prf_func_callbacks as PrfFuncCallbacks,
-};
+pub use crate::bindings::cust_prf_func_callbacks as CustPrfFuncCallbacks;
 
 unsafe impl Sync for CustPrfFuncCallbacks {}
 

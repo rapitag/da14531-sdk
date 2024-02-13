@@ -1,5 +1,3 @@
-use rtt_target::rprintln;
-
 use crate::{
     app_modules::{
         app::{zero_app_env_tag, AppEnvTag, APP_EASY_MAX_ACTIVE_CONNECTION},
@@ -8,9 +6,8 @@ use crate::{
             app_default_handler, app_state, AppDeviceInfo, AppDeviceName, APP_CONNECTABLE,
             APP_DISABLED, APP_IDX_MAX, APP_STATE_MAX,
         },
-        app_custs::{CustPrfFuncCallbacks, PrfFuncCallbacks},
         ms_to_ble_slots, zero_app_prf_srv_sec, AdvertiseConfiguration, AppPrfSrvSec,
-        GapmConfiguration, PRFS_TASK_ID_MAX,
+        GapmConfiguration, PrfFuncCallbacks, PRFS_TASK_ID_MAX,
     },
     ble_stack::{
         controller::llm::llm_le_env,
@@ -22,22 +19,20 @@ use crate::{
             GAP_AD_TYPE_COMPLETE_NAME, GAP_GEN_DISCOVERABLE, GAP_MAX_NAME_SIZE,
             GAP_NON_DISCOVERABLE, GAP_ROLE_PERIPHERAL,
         },
-        // profiles::custom::custs::custs1::{CUSTS1_ATT_DB, CUSTS1_ATT_DB_LEN},
     },
     platform::core_modules::{
         common::{
             co_min, ADV_ALLOW_SCAN_ANY_CON_ANY, ADV_ALLOW_SCAN_ANY_CON_WLST, ADV_ALL_CHNLS_EN,
-            ADV_DATA_LEN, KEY_LEN, SCAN_RSP_DATA_LEN,
+            ADV_CHNL_37_EN, ADV_CHNL_38_EN, ADV_CHNL_39_EN, ADV_DATA_LEN, KEY_LEN,
+            SCAN_RSP_DATA_LEN,
         },
         ke::task::{ke_state_set, ke_task_create, KeTaskDesc},
-        rwip::{
-            KeApiId, TASK_APP, TASK_GAPM, TASK_ID_ANCC, TASK_ID_BASS, TASK_ID_BCSS, TASK_ID_BMSS,
-            TASK_ID_CTSC, TASK_ID_CTSS, TASK_ID_CUSTS1, TASK_ID_DISS, TASK_ID_FINDL, TASK_ID_FINDT,
-            TASK_ID_GATT_CLIENT, TASK_ID_INVALID, TASK_ID_PROXR, TASK_ID_SUOTAR, TASK_ID_UDSS,
-            TASK_ID_WSSS,
-        },
+        rwip::{KeApiId, TASK_APP, TASK_GAPM, TASK_ID_DISS, TASK_ID_INVALID},
     },
 };
+
+#[cfg(feature = "profile_custom_server")]
+use crate::app_modules::app_custs::CustPrfFuncCallbacks;
 
 #[cfg(feature = "address_mode_public")]
 use crate::app_modules::APP_CFG_ADDR_PUB;
@@ -48,12 +43,6 @@ use crate::{app_modules::APP_CFG_ADDR_STATIC, platform::core_modules::common::BD
 mod advertise;
 
 use advertise::*;
-
-// type TimeoutCallback = fn();
-
-// type KeMsgGapmStartConnectionCmd = KeMsgDynGapmStartConnectionCmd<
-//     { core::mem::size_of::<GapBDAddr>() as u16 * CFG_MAX_CONNECTIONS as u16 },
-// >;
 
 #[link_section = "retention_mem_area0"]
 #[no_mangle]
@@ -75,7 +64,9 @@ static mut device_info: AppDeviceInfo = AppDeviceInfo {
     appearance: 0,
 };
 
-static USER_DEVICE_NAME: [u8; 5] = *b"10000";
+extern "Rust" {
+    pub static USER_DEVICE_NAME: &'static str;
+}
 
 macro_rules! prf_func_callbacks_size {
     () => {
@@ -197,11 +188,6 @@ static TASK_DESC_APP: KeTaskDesc = KeTaskDesc {
     idx_max: APP_IDX_MAX as u16,
 };
 
-// #[link_section = "retention_mem_area0"]
-// static mut ADV_TIMER_ID: TimerHandle = 0;
-
-// static void (*adv_timeout_callback)(void)                                          __SECTION_ZERO("retention_mem_area0"); // @RETENTION MEMORY
-
 #[cfg(feature = "profile_custom_server1")]
 pub extern "C" fn app_custs1_enable(conhdl: u8) {
     unsafe {
@@ -271,7 +257,7 @@ static mut APP_RANDOM_ADDR: BDAddr = BDAddr { addr: [0; 6] };
 
 configure_user_adv_data!(
     {ADV_TYPE_COMPLETE_LIST_16BIT_SERVICE_IDS, 0x6b, 0xfd},
-    {ADV_TYPE_MANUFACTURER_SPECIFIC_DATA, 0x98, 0x05, 0x01, 0x90, 0x01}
+    {ADV_TYPE_MANUFACTURER_SPECIFIC_DATA, 0x98, 0x05, 0x01, 0x90, 0x01, 0x02, 0x22}
 );
 
 configure_user_scan_response_data!();
@@ -279,7 +265,6 @@ configure_user_scan_response_data!();
 #[cfg(feature = "profile_custom_server")]
 #[no_mangle]
 pub extern "C" fn custs_get_func_callbacks(task_id: KeApiId) -> *const CustPrfFuncCallbacks {
-    // rprintln!("custs_get_func_callbacks({})", task_id);
     for pfcb in unsafe { CUST_PRF_FUNCS } {
         if pfcb.task_id == task_id {
             return &pfcb as *const _ as *const CustPrfFuncCallbacks;
@@ -301,7 +286,8 @@ fn update_device_info() {
 
         device_info.dev_name.length = cropped_len as u8;
 
-        device_info.dev_name.name[..cropped_len].copy_from_slice(&USER_DEVICE_NAME[..cropped_len]);
+        device_info.dev_name.name[..cropped_len]
+            .copy_from_slice((&USER_DEVICE_NAME[..cropped_len]).as_bytes());
 
         device_info.appearance = 0x0200; // Tag appearance
     }
@@ -324,7 +310,6 @@ fn app_task_in_user_app(task_id: KeApiId) -> bool {
 
 #[no_mangle]
 pub extern "C" fn app_db_init_next() -> bool {
-    // rprintln!("app_db_init_next");
     let extract_cb = |user_prf_func: &PrfFuncCallbacks| user_prf_func.db_create_func;
 
     let callbacks = USER_PRF_FUNCS.iter().filter_map(extract_cb).chain(
@@ -348,8 +333,6 @@ pub extern "C" fn app_db_init_next() -> bool {
 
 #[no_mangle]
 pub extern "C" fn app_prf_enable(conidx: u8) {
-    // rprintln!("app_prf_enable");
-
     let extract_cb = |user_prf_func: &PrfFuncCallbacks| user_prf_func.enable_func;
 
     let callbacks = USER_PRF_FUNCS.iter().filter_map(extract_cb).chain(
@@ -378,7 +361,6 @@ fn app_easy_gap_undirected_advertise_start_create_msg() -> KeMsgGapmStartAdverti
     let msg = cmd.fields();
 
     msg.op.code = GAPM_ADV_UNDIRECT as u8;
-
     msg.op.addr_src = USER_ADV_CONF.addr_src;
     msg.intv_min = USER_ADV_CONF.intv_min;
     msg.intv_max = USER_ADV_CONF.intv_max;
@@ -425,34 +407,36 @@ fn app_easy_gap_undirected_advertise_start_create_msg() -> KeMsgGapmStartAdverti
     //         }
     // #endif
 
-    if USER_DEVICE_NAME.len() > 0 {
-        let total_adv_space = 3 + host.adv_data_len as u16 + 2 + USER_DEVICE_NAME.len() as u16;
-        let total_scan_space = host.scan_rsp_data_len as u16 + 2 + USER_DEVICE_NAME.len() as u16;
+    let device_name = unsafe { USER_DEVICE_NAME };
+
+    if device_name.len() > 0 {
+        let total_adv_space = 3 + host.adv_data_len as u16 + 2 + device_name.len() as u16;
+        let total_scan_space = host.scan_rsp_data_len as u16 + 2 + device_name.len() as u16;
 
         if total_adv_space <= ADV_DATA_LEN as u16 {
             let mut offset = host.adv_data_len as usize;
 
-            host.adv_data[offset] = 1 + USER_DEVICE_NAME.len() as u8;
+            host.adv_data[offset] = 1 + device_name.len() as u8;
             offset += 1;
             host.adv_data[offset] = GAP_AD_TYPE_COMPLETE_NAME as u8;
             offset += 1;
 
-            host.adv_data[offset..(offset + USER_DEVICE_NAME.len())]
-                .copy_from_slice(&USER_DEVICE_NAME);
+            host.adv_data[offset..(offset + device_name.len())]
+                .copy_from_slice(device_name.as_bytes());
 
-            host.adv_data_len = (offset + USER_DEVICE_NAME.len()) as u8;
+            host.adv_data_len = (offset + device_name.len()) as u8;
         } else if total_scan_space <= SCAN_RSP_DATA_LEN as u16 {
             let mut offset = host.scan_rsp_data_len as usize;
 
-            host.scan_rsp_data[offset] = 1 + USER_DEVICE_NAME.len() as u8;
+            host.scan_rsp_data[offset] = 1 + device_name.len() as u8;
             offset += 1;
             host.scan_rsp_data[offset] = GAP_AD_TYPE_COMPLETE_NAME as u8;
             offset += 1;
 
-            host.scan_rsp_data[offset..(offset + USER_DEVICE_NAME.len())]
-                .copy_from_slice(&USER_DEVICE_NAME);
+            host.scan_rsp_data[offset..(offset + device_name.len())]
+                .copy_from_slice(device_name.as_bytes());
 
-            host.scan_rsp_data_len = (offset + USER_DEVICE_NAME.len()) as u8;
+            host.scan_rsp_data_len = (offset + device_name.len()) as u8;
         }
     }
 
@@ -536,13 +520,6 @@ pub fn app_easy_gap_undirected_advertise_start() {
 pub fn app_easy_gap_advertise_stop() {
     unsafe { crate::bindings::app_easy_gap_advertise_stop() }
 }
-
-// #[inline]
-// pub fn app_easy_gap_undirected_advertise_start() {
-//     unsafe {
-//         crate::bindings::app_easy_gap_undirected_advertise_start();
-//     }
-// }
 
 #[no_mangle]
 pub extern "C" fn app_easy_gap_dev_configure() {

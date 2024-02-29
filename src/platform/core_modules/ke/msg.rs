@@ -68,11 +68,3 @@ macro_rules! kernel_msg_type {
 }
 
 pub(crate) use kernel_msg_type;
-
-macro_rules! ke_build_id {
-    ($type: expr, $index: expr) => {
-        ((($index as u16) << 8) | ($type as u16))
-    };
-}
-
-pub(crate) use ke_build_id;

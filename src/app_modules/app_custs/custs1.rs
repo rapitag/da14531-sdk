@@ -1,5 +1,3 @@
-use rtt_target::rprintln;
-
 use crate::{
     app_modules::get_user_prf_srv_perm,
     ble_stack::{
@@ -11,7 +9,6 @@ use crate::{
 
 #[no_mangle]
 pub extern "C" fn app_custs1_create_db() {
-    // rprintln!("app_custs1_create_db");
     const SIZE: u16 = core::mem::size_of::<Custs1DbCfg>() as u16;
     let mut msg = KeMsgDynGapmProfileTaskAdd::<SIZE>::new(TASK_APP as u16, TASK_GAPM as u16);
 

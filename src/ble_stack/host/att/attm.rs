@@ -23,8 +23,8 @@ use crate::platform::core_modules::ke::task::KeTaskId;
 
 unsafe impl Sync for AttmDesc128 {}
 
-#[repr(C)]
 #[derive(Copy, Clone)]
+#[repr(C)]
 pub struct AttmDesc128 {
     pub uuid: *const u8,
     pub uuid_size: u8,
@@ -57,28 +57,5 @@ pub fn attm_svc_create_db_128(
             att_db as *const _,
             svc_perm,
         )
-    }
-}
-
-#[macro_export]
-macro_rules! perm {
-    ($access: ident, $right:ident) => {
-        $crate::paste! {
-            (
-                ($crate::ble_stack::host::att::attm::[<PERM_RIGHT_ $right>] << $crate::ble_stack::host::att::attm::[<PERM_POS_ $access>]) &
-                $crate::ble_stack::host::att::attm::[<PERM_MASK_ $access>]
-            )
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! perm_get {
-    ($perm: ident, $access: ident) => {
-        $crate::paste! {
-            (
-                (($perm as u32) & $crate::ble_stack::host::att::attm::[<PERM_MASK_ $access>]) >> $crate::ble_stack::host::att::attm::[<PERM_POS_ $access>]
-            )
-        }
     }
 }

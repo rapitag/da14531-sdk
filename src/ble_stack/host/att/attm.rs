@@ -1,22 +1,19 @@
-pub use crate::{
-    bindings::{
-        attm_perm_mask_PERM_MASK_RD as PERM_MASK_RD, attm_perm_mask_PERM_MASK_WR as PERM_MASK_WR,
-        attm_perm_mask_PERM_MASK_WRITE_COMMAND as PERM_MASK_WRITE_COMMAND,
-        attm_perm_mask_PERM_MASK_WRITE_REQ as PERM_MASK_WRITE_REQ,
-        attm_perm_mask_PERM_POS_RD as PERM_POS_RD, attm_perm_mask_PERM_POS_WR as PERM_POS_WR,
-        attm_perm_mask_PERM_POS_WRITE_COMMAND as PERM_POS_WRITE_COMMAND,
-        attm_perm_mask_PERM_POS_WRITE_REQ as PERM_POS_WRITE_REQ,
-        attm_svc_perm_mask_PERM_MASK_SVC_AUTH as PERM_MASK_SVC_AUTH,
-        attm_svc_perm_mask_PERM_MASK_SVC_EKS as PERM_MASK_SVC_EKS,
-        attm_svc_perm_mask_PERM_MASK_SVC_MI as PERM_MASK_SVC_MI,
-        attm_svc_perm_mask_PERM_MASK_SVC_PRIMARY as PERM_MASK_SVC_PRIMARY,
-        attm_svc_perm_mask_PERM_POS_SVC_MI as PERM_POS_SVC_MI,
-        attm_svc_perm_mask_PERM_POS_SVC_PRIMARY as PERM_POS_SVC_PRIMARY,
-        attm_value_perm_mask_PERM_MASK_RI as PERM_MASK_RI,
-        attm_value_perm_mask_PERM_POS_RI as PERM_POS_RI, PERM_RIGHT_AUTH, PERM_RIGHT_DISABLE,
-        PERM_RIGHT_ENABLE, PERM_RIGHT_SECURE, PERM_RIGHT_UNAUTH,
-    },
-    ble_stack::profiles::prf::{PERM_MASK_PRF_MI, PERM_POS_PRF_MI},
+pub use crate::bindings::{
+    attm_perm_mask_PERM_MASK_RD as PERM_MASK_RD, attm_perm_mask_PERM_MASK_WR as PERM_MASK_WR,
+    attm_perm_mask_PERM_MASK_WRITE_COMMAND as PERM_MASK_WRITE_COMMAND,
+    attm_perm_mask_PERM_MASK_WRITE_REQ as PERM_MASK_WRITE_REQ,
+    attm_perm_mask_PERM_POS_RD as PERM_POS_RD, attm_perm_mask_PERM_POS_WR as PERM_POS_WR,
+    attm_perm_mask_PERM_POS_WRITE_COMMAND as PERM_POS_WRITE_COMMAND,
+    attm_perm_mask_PERM_POS_WRITE_REQ as PERM_POS_WRITE_REQ,
+    attm_svc_perm_mask_PERM_MASK_SVC_AUTH as PERM_MASK_SVC_AUTH,
+    attm_svc_perm_mask_PERM_MASK_SVC_EKS as PERM_MASK_SVC_EKS,
+    attm_svc_perm_mask_PERM_MASK_SVC_MI as PERM_MASK_SVC_MI,
+    attm_svc_perm_mask_PERM_MASK_SVC_PRIMARY as PERM_MASK_SVC_PRIMARY,
+    attm_svc_perm_mask_PERM_POS_SVC_MI as PERM_POS_SVC_MI,
+    attm_svc_perm_mask_PERM_POS_SVC_PRIMARY as PERM_POS_SVC_PRIMARY,
+    attm_value_perm_mask_PERM_MASK_RI as PERM_MASK_RI,
+    attm_value_perm_mask_PERM_POS_RI as PERM_POS_RI, PERM_RIGHT_AUTH, PERM_RIGHT_DISABLE,
+    PERM_RIGHT_ENABLE, PERM_RIGHT_SECURE, PERM_RIGHT_UNAUTH,
 };
 
 use crate::platform::core_modules::ke::task::KeTaskId;

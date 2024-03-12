@@ -1,3 +1,4 @@
+#[cfg(feature = "ble_profiles")]
 pub mod prf;
 
 #[cfg(feature = "profile_custom_server")]

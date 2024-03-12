@@ -10,7 +10,6 @@ extern "Rust" {
     );
 }
 
-#[cfg(feature = "custom_rest_evt_cb")]
 #[no_mangle]
 pub extern "C" fn app_process_catch_rest_cb(
     msg_id: KeMsgId,
@@ -18,10 +17,9 @@ pub extern "C" fn app_process_catch_rest_cb(
     dest_id: KeTaskId,
     src_id: KeTaskId,
 ) {
-    rtt_target::rprintln!("app_process_catch_rest_cb");
-    unsafe { user_catch_rest_hndl(msg_id, param, dest_id, src_id) };
+    #[cfg(feature = "custom_rest_evt_cb")]
+    {
+        rtt_target::rprintln!("app_process_catch_rest_cb");
+        unsafe { user_catch_rest_hndl(msg_id, param, dest_id, src_id) };
+    }
 }
-
-#[cfg(not(feature = "custom_rest_evt_cb"))]
-#[no_mangle]
-pub static app_process_catch_rest_cb: usize = 0;

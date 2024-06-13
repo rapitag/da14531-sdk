@@ -153,8 +153,9 @@ pub const fn app_cfg_addr_src(val: u32) -> u8 {
 }
 
 pub const fn ms_to_ble_slots(val: u32) -> u16 {
-    ((val * 1000) / 625) as u16
+    (val as f32 * 0.625) as u16
 }
+
 pub const fn ms_to_timer_units(val: u32) -> u16 {
     (val / 10) as u16
 }

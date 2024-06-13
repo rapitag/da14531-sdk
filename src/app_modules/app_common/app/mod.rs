@@ -1,12 +1,14 @@
+use core::ptr::addr_of;
+
 use crate::{
     app_modules::{
         app::{zero_app_env_tag, AppEnvTag, APP_EASY_MAX_ACTIVE_CONNECTION},
-        app_cfg_addr_src, app_cfg_addr_type,
+        app_cfg_addr_type,
         app_common::{
             app_default_handler, app_state, AppDeviceInfo, AppDeviceName, APP_CONNECTABLE,
             APP_DISABLED, APP_IDX_MAX, APP_STATE_MAX,
         },
-        ms_to_ble_slots, zero_app_prf_srv_sec, AdvertiseConfiguration, AppPrfSrvSec,
+        zero_app_prf_srv_sec, AdvertiseConfiguration, AppCallbacks, AppPrfSrvSec,
         GapmConfiguration, PrfFuncCallbacks, PRFS_TASK_ID_MAX,
     },
     ble_stack::{
@@ -16,15 +18,14 @@ use crate::{
                 KeMsgGapmSetDevConfigCmd, KeMsgGapmStartAdvertiseCmd, GAPM_ADV_UNDIRECT,
                 GAPM_MASK_ATT_SVC_CHG_EN, GAPM_SET_DEV_CONFIG,
             },
-            GAP_AD_TYPE_COMPLETE_NAME, GAP_GEN_DISCOVERABLE, GAP_MAX_NAME_SIZE,
-            GAP_NON_DISCOVERABLE, GAP_ROLE_PERIPHERAL,
+            GAP_AD_TYPE_COMPLETE_NAME, GAP_MAX_NAME_SIZE, GAP_NON_DISCOVERABLE,
+            GAP_ROLE_PERIPHERAL,
         },
     },
     platform::core_modules::{
         common::{
-            co_min, ADV_ALLOW_SCAN_ANY_CON_ANY, ADV_ALLOW_SCAN_ANY_CON_WLST, ADV_ALL_CHNLS_EN,
-            ADV_CHNL_37_EN, ADV_CHNL_38_EN, ADV_CHNL_39_EN, ADV_DATA_LEN, KEY_LEN,
-            SCAN_RSP_DATA_LEN,
+            co_min, BDAddr, ADV_ALLOW_SCAN_ANY_CON_WLST, ADV_ALL_CHNLS_EN, ADV_CHNL_37_EN,
+            ADV_CHNL_38_EN, ADV_CHNL_39_EN, ADV_DATA_LEN, KEY_LEN, SCAN_RSP_DATA_LEN,
         },
         ke::task::{ke_state_set, ke_task_create, KeTaskDesc},
         rwip::{KeApiId, TASK_APP, TASK_GAPM, TASK_ID_DISS, TASK_ID_INVALID},
@@ -38,7 +39,7 @@ use crate::app_modules::app_custs::CustPrfFuncCallbacks;
 use crate::app_modules::APP_CFG_ADDR_PUB;
 
 #[cfg(feature = "address_mode_static")]
-use crate::{app_modules::APP_CFG_ADDR_STATIC, platform::core_modules::common::BDAddr};
+use crate::app_modules::APP_CFG_ADDR_STATIC;
 
 mod advertise;
 
@@ -66,6 +67,7 @@ static mut device_info: AppDeviceInfo = AppDeviceInfo {
 
 extern "Rust" {
     pub static USER_DEVICE_NAME: &'static str;
+    pub static user_app_callbacks: AppCallbacks;
 }
 
 macro_rules! prf_func_callbacks_size {
@@ -211,27 +213,17 @@ extern "Rust" {
         )];
 }
 
+extern "Rust" {
+    pub static USER_ADV_CONF: AdvertiseConfiguration;
+}
+
 const USER_PRF_FUNCS: [PrfFuncCallbacks; 1] = [PrfFuncCallbacks {
     task_id: TASK_ID_INVALID,
     db_create_func: None,
     enable_func: None,
 }];
 
-const USER_ADV_CONF: AdvertiseConfiguration = AdvertiseConfiguration {
-    #[cfg(feature = "address_mode_public")]
-    addr_src: app_cfg_addr_src(APP_CFG_ADDR_PUB),
-    #[cfg(feature = "address_mode_static")]
-    addr_src: app_cfg_addr_src(APP_CFG_ADDR_STATIC),
-    intv_min: ms_to_ble_slots(99),
-    intv_max: ms_to_ble_slots(99),
-    channel_map: ADV_ALL_CHNLS_EN as u8,
-    mode: GAP_GEN_DISCOVERABLE as u8,
-    adv_filt_policy: ADV_ALLOW_SCAN_ANY_CON_ANY as u8,
-    peer_addr: [0x1, 0x2, 0x3, 0x4, 0x5, 0x6],
-    peer_addr_type: 0,
-};
-
-const USER_GAPM_CONF: GapmConfiguration = GapmConfiguration {
+static mut USER_GAPM_CONF: GapmConfiguration = GapmConfiguration {
     role: GAP_ROLE_PERIPHERAL,
     max_mtu: 23,
     #[cfg(feature = "address_mode_public")]
@@ -261,20 +253,6 @@ configure_user_adv_data!(
 );
 
 configure_user_scan_response_data!();
-
-#[cfg(feature = "profile_custom_server")]
-#[no_mangle]
-pub extern "C" fn custs_get_func_callbacks(task_id: KeApiId) -> *const CustPrfFuncCallbacks {
-    for pfcb in unsafe { CUST_PRF_FUNCS } {
-        if pfcb.task_id == task_id {
-            return &pfcb as *const _ as *const CustPrfFuncCallbacks;
-        } else if pfcb.task_id == TASK_ID_INVALID {
-            break;
-        }
-    }
-
-    core::ptr::null()
-}
 
 fn update_device_info() {
     unsafe {
@@ -353,29 +331,33 @@ pub extern "C" fn app_prf_enable(conidx: u8) {
 }
 
 fn app_easy_gap_undirected_advertise_start_create_msg() -> KeMsgGapmStartAdvertiseCmd {
-    assert!(USER_ADVERTISE_DATA.len() <= ADV_DATA_LEN as usize);
+    let user_advertise_data = unsafe { &USER_ADVERTISE_DATA };
+
+    assert!(user_advertise_data.len() <= ADV_DATA_LEN as usize);
     assert!(USER_ADVERTISE_SCAN_RESPONSE_DATA.len() <= SCAN_RSP_DATA_LEN as usize);
 
     let mut cmd = KeMsgGapmStartAdvertiseCmd::new(TASK_APP as u16, TASK_GAPM as u16);
 
     let msg = cmd.fields();
 
+    let user_adv_conf = unsafe { &USER_ADV_CONF };
+
     msg.op.code = GAPM_ADV_UNDIRECT as u8;
-    msg.op.addr_src = USER_ADV_CONF.addr_src;
-    msg.intv_min = USER_ADV_CONF.intv_min;
-    msg.intv_max = USER_ADV_CONF.intv_max;
-    msg.channel_map = USER_ADV_CONF.channel_map;
-    msg.info.host.adv_filt_policy = USER_ADV_CONF.adv_filt_policy;
-    if USER_ADV_CONF.adv_filt_policy == ADV_ALLOW_SCAN_ANY_CON_WLST as u8 {
+    msg.op.addr_src = user_adv_conf.addr_src;
+    msg.intv_min = user_adv_conf.intv_min;
+    msg.intv_max = user_adv_conf.intv_max;
+    msg.channel_map = user_adv_conf.channel_map;
+    msg.info.host.adv_filt_policy = user_adv_conf.adv_filt_policy;
+    if user_adv_conf.adv_filt_policy == ADV_ALLOW_SCAN_ANY_CON_WLST as u8 {
         msg.info.host.mode = GAP_NON_DISCOVERABLE as u8;
     } else {
-        msg.info.host.mode = USER_ADV_CONF.mode;
+        msg.info.host.mode = user_adv_conf.mode;
     }
 
     let host = unsafe { &mut msg.info.host };
 
-    host.adv_data_len = USER_ADVERTISE_DATA.len() as u8;
-    host.adv_data[..USER_ADVERTISE_DATA.len()].copy_from_slice(&USER_ADVERTISE_DATA);
+    host.adv_data_len = user_advertise_data.len() as u8;
+    host.adv_data[..user_advertise_data.len()].copy_from_slice(user_advertise_data);
 
     host.scan_rsp_data_len = USER_ADVERTISE_SCAN_RESPONSE_DATA.len() as u8;
     host.scan_rsp_data[..USER_ADVERTISE_SCAN_RESPONSE_DATA.len()]
@@ -450,9 +432,11 @@ fn app_easy_gap_dev_config_create_msg() -> KeMsgGapmSetDevConfigCmd {
 
     msg.operation = GAPM_SET_DEV_CONFIG as u8;
 
-    msg.role = USER_GAPM_CONF.role as u8;
-    msg.max_mtu = USER_GAPM_CONF.max_mtu;
-    msg.addr_type = USER_GAPM_CONF.addr_type;
+    let user_gapm_conf = unsafe { &USER_GAPM_CONF };
+
+    msg.role = user_gapm_conf.role as u8;
+    msg.max_mtu = user_gapm_conf.max_mtu;
+    msg.addr_type = user_gapm_conf.addr_type;
 
     #[cfg(any(feature = "address_mode_public", feature = "address_mode_static"))]
     {
@@ -461,16 +445,33 @@ fn app_easy_gap_dev_config_create_msg() -> KeMsgGapmSetDevConfigCmd {
     }
     #[cfg(not(any(feature = "address_mode_public", feature = "address_mode_static")))]
     {
-        msg.renew_dur = USER_GAPM_CONF.renew_dur;
-        msg.irk.key.copy_from_slice(&USER_GAPM_CONF.irk);
+        msg.renew_dur = user_gapm_conf.renew_dur;
+        msg.irk.key.copy_from_slice(&user_gapm_conf.irk);
     }
 
     #[cfg(feature = "address_mode_static")]
     {
-        let tmp_addr = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+        // let tmp_addr = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
-        todo!();
-        //         // Check whether the user-defined Random Static address is null.
+        // Check whether the user-defined Random Static address is null.
+        if user_gapm_conf.addr.iter().cloned().sum::<u8>() == 0 {
+            let mut bd_addr = BDAddr { addr: [0; 6] };
+            if let Some(app_on_generate_static_random_addr) =
+                unsafe { user_app_callbacks.app_on_generate_static_random_addr }
+            {
+                unsafe {
+                    app_on_generate_static_random_addr(&mut bd_addr);
+                }
+                unsafe {
+                    msg.addr.addr.copy_from_slice(&bd_addr.addr);
+                }
+            } else {
+                panic!("With static address mode, you either need to defined a valid static address or the callback app_on_generate_static_random_addr!");
+            }
+        } else {
+            todo!();
+        }
+        //
         //         if (memcmp(USER_GAPM_CONF.addr, &co_null_bdaddr, BD_ADDR_LEN) == 0)
         //         {
         //             CALLBACK_ARGS_1(user_app_callbacks.app_on_generate_static_random_addr, &app_random_addr)
@@ -488,13 +489,13 @@ fn app_easy_gap_dev_config_create_msg() -> KeMsgGapmSetDevConfigCmd {
         //         }
     }
 
-    msg.att_cfg = USER_GAPM_CONF.att_cfg;
-    msg.gap_start_hdl = USER_GAPM_CONF.gap_start_hdl;
-    msg.gatt_start_hdl = USER_GAPM_CONF.gatt_start_hdl;
-    msg.max_mps = USER_GAPM_CONF.max_mps;
+    msg.att_cfg = user_gapm_conf.att_cfg;
+    msg.gap_start_hdl = user_gapm_conf.gap_start_hdl;
+    msg.gatt_start_hdl = user_gapm_conf.gatt_start_hdl;
+    msg.max_mps = user_gapm_conf.max_mps;
     unsafe {
-        msg.max_txoctets = co_min(USER_GAPM_CONF.max_txoctets, llm_le_env.supportedMaxTxOctets);
-        msg.max_txtime = co_min(USER_GAPM_CONF.max_txtime, llm_le_env.supportedMaxTxTime);
+        msg.max_txoctets = co_min(user_gapm_conf.max_txoctets, llm_le_env.supportedMaxTxOctets);
+        msg.max_txtime = co_min(user_gapm_conf.max_txtime, llm_le_env.supportedMaxTxTime);
     }
 
     cmd

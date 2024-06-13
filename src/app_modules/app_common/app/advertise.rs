@@ -145,7 +145,7 @@ macro_rules! user_adv_data_entry_size {
 
 macro_rules! configure_user_adv_data {
     ($({$adv_type: ident, $($byte:literal),*}),*) => {
-        const USER_ADVERTISE_DATA: [u8; 0 $(
+        pub static mut USER_ADVERTISE_DATA: [u8; 0 $(
             + user_adv_data_entry_size!($($byte )*) + 1
         )*] = [
             $(

@@ -19,7 +19,6 @@ pub extern "C" fn app_process_catch_rest_cb(
 ) {
     #[cfg(feature = "custom_rest_evt_cb")]
     {
-        rtt_target::rprintln!("app_process_catch_rest_cb");
         unsafe { user_catch_rest_hndl(msg_id, param, dest_id, src_id) };
     }
 }

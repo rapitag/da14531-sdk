@@ -251,7 +251,7 @@ extern void app_process_catch_rest_cb(ke_msg_id_t const msgid,
     void const *param,
     ke_task_id_t const dest_id,
     ke_task_id_t const src_id);
-" // {app_process_catch_rest_cb}"
+"
     );
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
@@ -260,7 +260,7 @@ extern void app_process_catch_rest_cb(ke_msg_id_t const msgid,
 
 fn generate_user_config() {
     #[cfg(all(feature = "address_mode_public", feature = "address_mode_static"))]
-    compile_error!("Only one address mode featzre flag can be set!");
+    compile_error!("Only one address mode feature flag can be set!");
 
     let address_mode = if cfg!(feature = "address_mode_public") {
         "APP_CFG_ADDR_PUB"
@@ -323,10 +323,13 @@ fn setup_build() -> (
     #[allow(unused_mut)]
     let mut sdk_c_sources: Vec<_> = SDK_C_SOURCES.clone();
 
-    let mut defines = vec![("__DA14531__", None)];
+    let mut defines: Vec<(&str, Option<&str>)> = vec![("__DA14531__", None)];
 
     #[allow(unused_mut)]
     let mut include_files: Vec<&str> = Vec::new();
+
+    // Enable TRNG
+    defines.push(("CFG_USE_CHACHA20_RAND", None));
 
     #[cfg(feature = "address_mode_public")]
     {

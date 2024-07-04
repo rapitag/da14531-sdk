@@ -18,11 +18,11 @@ name = "da14531-sdk"
 readme = "README.md"
 repository = "https://github.com/rapitag/da14531-sdk"
 rust-version = "1.60"
-version = "0.1.1"
+version = "0.2.0"
 
 [dependencies]
 cty = "0.2.2"
-da14531-sdk-macros = "0.1.0"
+da14531-sdk-macros = "0.2.0"
 paste = "1.0.7"
 rtt-target = "0.3.1"
 
@@ -35,7 +35,7 @@ lazy_static = "1.4.0"
 default = [
   "custom_rest_evt_cb",
   "sleep_mode_off",
-  "address_mode_public",
+  "address_mode_static",
   "profile_dis_server",
   "profile_custom_server1",
 ]
@@ -53,8 +53,9 @@ address_mode_public = []
 address_mode_static = []
 
 # BLE profiles
-ble_client_profiles = []
-ble_server_profiles = []
+ble_profiles = []
+ble_client_profiles = ["ble_profiles"]
+ble_server_profiles = ["ble_profiles"]
 profile_anc_client = ["ble_client_profiles"]
 profile_batt_server = ["ble_server_profiles"]
 profile_bcs_server = ["ble_server_profiles"]

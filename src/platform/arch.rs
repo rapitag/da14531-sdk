@@ -4,6 +4,8 @@ pub use crate::bindings::{
 };
 pub use da14531_sdk_macros::register_main_loop_callbacks;
 
+// ToDo: Port everything to HAL crate
+
 #[inline]
 pub fn arch_ble_force_wakeup() -> bool {
     unsafe { crate::bindings::arch_ble_force_wakeup() }

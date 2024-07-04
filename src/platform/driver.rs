@@ -3,6 +3,7 @@ pub mod syscntl {
         syscntl_dcdc_level_t as SyscntlDcdcLevel, syscntl_dcdc_turn_on_in_boost,
     };
 
+    // ToDo: Port to HAL crate
     #[inline]
     pub fn dcdc_turn_on_in_boost(dcdc_level: SyscntlDcdcLevel) {
         unsafe {
@@ -11,6 +12,7 @@ pub mod syscntl {
     }
 }
 
+// ToDo: Port to HAL crate
 pub mod gpio {
     #[inline]
     pub fn GPIO_EnableIRQ(pin: u8, irq: u8, low_input: bool, release_wait: bool, debounce: u8) {

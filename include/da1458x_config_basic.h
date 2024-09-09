@@ -79,7 +79,8 @@
 /* SPI FLASH  (#define CFG_SPI_FLASH_ENABLE)                                                                    */
 /* I2C EEPROM (#define CFG_I2C_EEPROM_ENABLE)                                                                   */
 /****************************************************************************************************************/
-#undef CFG_SPI_FLASH_ENABLE
+// #undef CFG_SPI_FLASH_ENABLE
+#define CFG_SPI_FLASH_ENABLE
 #undef CFG_I2C_EEPROM_ENABLE
 
 /****************************************************************************************************************/
@@ -99,5 +100,12 @@
 /*     - CFG_POWER_MODE_BYPASS = Bypass mode                                                                    */
 /****************************************************************************************************************/
 #undef CFG_POWER_MODE_BYPASS
+
+
+/****************************************************************************************************************/
+/* Enable extra wait time after release from Ultra Deep Power-Down (UDPD). Mainly required for the              */
+/* Adesto/Dialog SPI flash memories which support the UDPD command.                                             */
+/****************************************************************************************************************/
+#define CFG_SPI_FLASH_ADESTO_UDPD
 
 #endif // _DA1458X_CONFIG_BASIC_H_

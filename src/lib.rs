@@ -6,7 +6,11 @@
 
 extern crate alloc;
 
+#[cfg(feature = "expose_bindings")]
 pub mod bindings;
+
+#[cfg(not(feature = "expose_bindings"))]
+mod bindings;
 
 pub mod app;
 pub mod app_modules;

@@ -115,6 +115,8 @@ lazy_static! {
         "/sdk/platform/driver/trng/trng.c",
         "/sdk/platform/driver/uart/uart_utils.c",
         "/sdk/platform/driver/uart/uart.c",
+        "/sdk/platform/driver/spi/spi_531.c",
+        "/sdk/platform/driver/spi_flash/spi_flash.c",
         "/sdk/platform/utilities/otp_cs/otp_cs.c",
         "/sdk/platform/utilities/otp_hdr/otp_hdr.c"
     ];
@@ -230,32 +232,6 @@ fn generate_user_profiles_config() {
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     std::fs::write(out_path.join("user_profiles_config.h"), header).unwrap();
-}
-
-fn generate_user_callback_config() {
-    let header = format!(
-        "
-#pragma once
-
-#include <stdio.h>
-#include \"app_callback.h\"
-#include \"app_default_handlers.h\"
-#include \"app_entry_point.h\"
-#include \"app_prf_types.h\"
-
-extern const struct app_callbacks user_app_callbacks;
-extern const struct default_app_operations user_default_app_operations;
-extern const struct arch_main_loop_callbacks user_app_main_loop_callbacks;
-
-extern void app_process_catch_rest_cb(ke_msg_id_t const msgid,
-    void const *param,
-    ke_task_id_t const dest_id,
-    ke_task_id_t const src_id);
-"
-    );
-
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    std::fs::write(out_path.join("user_callback_config.h"), header).unwrap();
 }
 
 fn generate_user_config() {
@@ -401,7 +377,18 @@ fn setup_build() -> (
 
     let sdk_c_sources: Vec<_> = sdk_c_sources
         .iter()
-        .map(|path| format!("{}{}", sdk_path, path))
+        .filter_map(|path| {
+            if cfg!(feature = "no_main") && path.ends_with("arch_main.c") {
+                return None;
+            }
+            if cfg!(not(feature = "driver_spi")) && path.ends_with("spi_531.c") {
+                return None;
+            }
+            if cfg!(not(feature = "driver_spi_flash")) && path.ends_with("spi_flash.c") {
+                return None;
+            }
+            Some(format!("{}{}", sdk_path, path))
+        })
         .collect();
 
     let sdk_asm_sources: Vec<_> = SDK_ASM_SOURCES
@@ -484,6 +471,10 @@ fn compile_sdk(
         .flag("-march=armv6-m")
         .flag("-Wno-expansion-to-defined")
         .flag("-Wno-unused-parameter")
+        .flag("-fstack-usage")
+        .flag("-ffunction-sections")
+        .flag("-fdata-sections")
+        .opt_level_str("z")
         .define("USER_DEVICE_NAME_LEN", Some("0"));
 
     for inc_dir in include_dirs {
@@ -514,7 +505,6 @@ fn main() {
     let (include_dirs, include_files, sdk_c_sources, sdk_asm_sources, defines) = setup_build();
 
     generate_user_config();
-    generate_user_callback_config();
     generate_user_modules_config();
     generate_user_profiles_config();
 
@@ -542,6 +532,8 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
 
     println!("cargo:rerun-if-changed=include/da1458x_config_basic.h");
-    println!("cargo:rerun-if-changed=include/da1458x_config_advanced.h",);
-    println!("cargo:rerun-if-changed=include/user_periph_setup.h",);
+    println!("cargo:rerun-if-changed=include/da1458x_config_advanced.h");
+    println!("cargo:rerun-if-changed=include/user_callback_config.h");
+    println!("cargo:rerun-if-changed=include/user_custs_config.h");
+    println!("cargo:rerun-if-changed=include/user_periph_setup.h");
 }

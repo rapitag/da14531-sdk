@@ -27,6 +27,8 @@
 #include "aes.h"
 #include "otp_cs.h"
 #include "rf_531.h"
+#include "spi.h"
+#include "spi_flash.h"
 
 const uint8_t APP_MODULES_TIMER_MAX_NUM = (APP_TIMER_API_LAST_MES - APP_TIMER_API_MES0 + 1);
 const uint16_t APP_MODULES_TIMER_API_MES0 = APP_TIMER_API_MES0;

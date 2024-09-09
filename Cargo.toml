@@ -40,6 +40,16 @@ default = [
   "profile_custom_server1",
 ]
 
+# No main
+no_main = []
+
+# Expose unsafe bindings
+expose_bindings = []
+
+# Drivers
+driver_spi = []
+driver_spi_flash = []
+
 # Custom REST event callback
 custom_rest_evt_cb = []
 
@@ -53,8 +63,8 @@ address_mode_public = []
 address_mode_static = []
 
 # BLE profiles
-ble_profiles = []
 ble_client_profiles = ["ble_profiles"]
+ble_profiles = []
 ble_server_profiles = ["ble_profiles"]
 profile_anc_client = ["ble_client_profiles"]
 profile_batt_server = ["ble_server_profiles"]

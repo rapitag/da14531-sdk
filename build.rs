@@ -1,5 +1,5 @@
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use lazy_static::lazy_static;
 
@@ -291,7 +291,12 @@ fn setup_build() -> (
     Vec<String>,
     Vec<(String, Option<String>)>,
 ) {
-    let sdk_path = env::var("SDK_PATH").unwrap_or("../sdk".into());
+    let sdk_path = env::var("SDK_PATH")
+        .map(|path| Path::new(&path).to_path_buf())
+        .unwrap_or(PathBuf::new().join("..").join("sdk"))
+        .to_str()
+        .unwrap()
+        .to_string();
 
     #[allow(unused_mut)]
     let mut include_dirs = INCLUDE_PATHS.clone();
@@ -330,30 +335,34 @@ fn setup_build() -> (
     #[cfg(feature = "profile_gatt_client")]
     {
         defines.push(("CFG_PRF_GATTC", None));
-        include_dirs.push("/sdk/ble_stack/profiles/gatt/gatt_client/api");
-        sdk_c_sources.push("/sdk/app_modules/src/app_gattc/app_gattc.c");
+        include_dirs.push(&translate_path(
+            "/sdk/ble_stack/profiles/gatt/gatt_client/api",
+        ));
+        sdk_c_sources.push(&translate_path(
+            "/sdk/app_modules/src/app_gattc/app_gattc.c",
+        ));
     }
 
     #[cfg(feature = "profile_prox_reporter")]
     {
         defines.push(("CFG_PRF_PXPR", None));
-        include_dirs.push("/sdk/ble_stack/profiles/prox/proxr/api");
-        include_files.push("/sdk/app_modules/api/app_proxr.h");
+        include_dirs.push(&translate_path("/sdk/ble_stack/profiles/prox/proxr/api"));
+        include_files.push(&translate_path("/sdk/app_modules/api/app_proxr.h"));
     }
 
     #[cfg(feature = "profile_batt_server")]
     {
         defines.push(("CFG_PRF_PXPR", None));
-        include_dirs.push("/sdk/ble_stack/profiles/prox/proxr/api");
-        include_files.push("/sdk/app_modules/api/app_proxr.h");
+        include_dirs.push(&translate_path("/sdk/ble_stack/profiles/prox/proxr/api"));
+        include_files.push(&translate_path("/sdk/app_modules/api/app_proxr.h"));
     }
 
     #[cfg(feature = "profile_findme_target")]
     {
         defines.push(("CFG_PRF_FMPT", None));
-        include_dirs.push("/sdk/ble_stack/profiles/find/findt/api");
-        include_dirs.push("/sdk/ble_stack/profiles/find");
-        include_files.push("/sdk/app_modules/api/app_findme.h");
+        include_dirs.push(&translate_path("/sdk/ble_stack/profiles/find/findt/api"));
+        include_dirs.push(&translate_path("/sdk/ble_stack/profiles/find"));
+        include_files.push(&translate_path("/sdk/app_modules/api/app_findme.h"));
     }
 
     let mut include_dirs: Vec<_> = include_dirs
@@ -361,10 +370,15 @@ fn setup_build() -> (
         .map(|path| format!("{}{}", sdk_path, path))
         .collect();
 
-    include_dirs.push(format!(
-        "{}/include",
-        env::current_dir().unwrap().to_str().unwrap()
-    ));
+    include_dirs.push(
+        env::current_dir()
+            .unwrap()
+            .to_path_buf()
+            .join("include")
+            .to_str()
+            .unwrap()
+            .to_string(),
+    );
     include_dirs.push(env::var("OUT_DIR").unwrap());
 
     let mut include_files: Vec<_> = include_files
@@ -423,9 +437,11 @@ fn generate_bindings(
         .size_t_is_usize(true)
         .clang_arg("-D__SOFTFP__")
         .clang_arg("-DUSER_DEVICE_NAME_LEN=0")
-        .clang_arg("-I/Applications/ARM/arm-none-eabi/include")
-        .clang_arg("-I/usr/lib/gcc/arm-none-eabi/12.2.1/include")
-        .clang_arg("-I/usr/include/newlib")
+        .clang_arg(&translate_path("-I/Applications/ARM/arm-none-eabi/include"))
+        .clang_arg(&translate_path(
+            "-I/usr/lib/gcc/arm-none-eabi/12.2.1/include",
+        ))
+        .clang_arg(&translate_path("-I/usr/include/newlib"))
         .clang_arg("-Wno-expansion-to-defined");
 
     for (key, value) in defines {
@@ -437,11 +453,11 @@ fn generate_bindings(
     }
 
     for inc_dir in include_dirs {
-        builder = builder.clang_arg(format!("-I{}", inc_dir));
+        builder = builder.clang_arg(format!("-I{}", translate_path(inc_dir)));
     }
 
     for inc_file in include_files {
-        builder = builder.clang_args(vec!["-include", inc_file]);
+        builder = builder.clang_args(vec!["-include", &translate_path(inc_file)]);
     }
 
     for re in rustify_enums {
@@ -478,11 +494,11 @@ fn compile_sdk(
         .define("USER_DEVICE_NAME_LEN", Some("0"));
 
     for inc_dir in include_dirs {
-        cc_builder = cc_builder.include(inc_dir);
+        cc_builder = cc_builder.include(translate_path(inc_dir));
     }
 
     for inc_file in include_files {
-        cc_builder = cc_builder.flag(&format!("-include{}", inc_file));
+        cc_builder = cc_builder.flag(&format!("-include{}", translate_path(inc_file)));
     }
 
     for (key, value) in defines {
@@ -490,7 +506,7 @@ fn compile_sdk(
     }
 
     for file in sdk_c_sources {
-        cc_builder = cc_builder.file(file);
+        cc_builder = cc_builder.file(translate_path(file));
     }
 
     cc_builder.compile("sdk");
@@ -531,9 +547,32 @@ fn main() {
     println!("cargo:rerun-if-changed=bindings.h");
     println!("cargo:rerun-if-changed=build.rs");
 
-    println!("cargo:rerun-if-changed=include/da1458x_config_basic.h");
-    println!("cargo:rerun-if-changed=include/da1458x_config_advanced.h");
-    println!("cargo:rerun-if-changed=include/user_callback_config.h");
-    println!("cargo:rerun-if-changed=include/user_custs_config.h");
-    println!("cargo:rerun-if-changed=include/user_periph_setup.h");
+    println!(
+        "cargo:rerun-if-changed={}",
+        &translate_path("include/da1458x_config_basic.h")
+    );
+    println!(
+        "cargo:rerun-if-changed={}",
+        &translate_path("include/da1458x_config_advanced.h")
+    );
+    println!(
+        "cargo:rerun-if-changed={}",
+        &translate_path("include/user_callback_config.h")
+    );
+    println!(
+        "cargo:rerun-if-changed={}",
+        &translate_path("include/user_custs_config.h")
+    );
+    println!(
+        "cargo:rerun-if-changed={}",
+        &translate_path("include/user_periph_setup.h")
+    );
+}
+
+fn translate_path(path: &str) -> String {
+    if cfg!(windows) {
+        path.replace("/", "\\")
+    } else {
+        path.to_string()
+    }
 }

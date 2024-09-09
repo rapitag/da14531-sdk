@@ -21,6 +21,19 @@ impl<const ID: u32, const SIZE: u16, T> KernelMessage<ID, SIZE, T> {
         Self(msg_ptr)
     }
 
+    pub fn new_dynamic(size: u16, src_id: KeMsgId, dest_id: KeMsgId) -> Self {
+        let msg_ptr = unsafe {
+            ke_msg_alloc(
+                ID as u16,
+                dest_id,
+                src_id,
+                core::mem::size_of::<T>() as u16 + size,
+            ) as *mut T
+        };
+
+        Self(msg_ptr)
+    }
+
     pub fn fields(&mut self) -> &mut T {
         unsafe { &mut *self.0 }
     }

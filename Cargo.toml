@@ -29,7 +29,6 @@ rtt-target = "0.3.1"
 [build-dependencies]
 bindgen = "0.59.2"
 cc = "1.0"
-lazy_static = "1.4.0"
 
 [features]
 default = [

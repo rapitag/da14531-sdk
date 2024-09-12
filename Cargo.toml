@@ -27,7 +27,7 @@ paste = "1.0.7"
 rtt-target = "0.3.1"
 
 [build-dependencies]
-bindgen = "0.59.2"
+bindgen = {version="0.70.1", features=["experimental"]}
 cc = "1.0"
 lazy_static = "1.4.0"
 

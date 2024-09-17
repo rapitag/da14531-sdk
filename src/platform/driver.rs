@@ -287,6 +287,19 @@ pub mod spi_flash {
     }
 
     #[inline]
+    pub fn spi_flash_page_erase(address: u32) -> SpiFlashResult {
+        ret_to_result(
+            unsafe { crate::bindings::spi_flash_page_erase(address) },
+            (),
+        )
+    }
+
+    #[inline]
+    pub fn spi_flash_chip_erase() -> SpiFlashResult {
+        ret_to_result(unsafe { crate::bindings::spi_flash_chip_erase() }, ())
+    }
+
+    #[inline]
     pub fn spi_flash_write_data(data: &[u8], address: u32) -> SpiFlashResult<usize> {
         let mut bytes_written = 0;
         ret_to_result(
@@ -358,6 +371,11 @@ pub mod spi_flash {
             unsafe { crate::bindings::spi_flash_release_from_power_down() },
             (),
         )
+    }
+
+    #[inline]
+    pub fn spi_flash_power_down() -> SpiFlashResult {
+        ret_to_result(unsafe { crate::bindings::spi_flash_power_down() }, ())
     }
 
     #[inline]

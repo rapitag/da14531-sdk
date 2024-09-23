@@ -175,6 +175,6 @@ macro_rules! configure_user_scan_response_data {
     };
 }
 
-pub(crate) use user_adv_data_entry_size;
 pub(crate) use configure_user_adv_data;
 pub(crate) use configure_user_scan_response_data;
+pub(crate) use user_adv_data_entry_size;

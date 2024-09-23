@@ -12,12 +12,12 @@ pub mod bindings;
 #[cfg(not(feature = "expose_bindings"))]
 mod bindings;
 
+pub mod allocator;
 pub mod app;
 pub mod app_modules;
 pub mod ble_stack;
 pub mod platform;
 pub mod stdlib;
-pub mod allocator;
 
 pub use paste::paste;
 

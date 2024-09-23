@@ -1,4 +1,4 @@
-use crate::platform::core_modules::common::{HciLeTxTestCmd, HciLeRxTestCmd};
+use crate::platform::core_modules::common::{HciLeRxTestCmd, HciLeTxTestCmd};
 
 pub use crate::bindings::{llm_le_env, LLM_ADV_INTERVAL_MAX, LLM_ADV_INTERVAL_MIN};
 

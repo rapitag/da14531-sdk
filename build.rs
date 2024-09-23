@@ -430,6 +430,13 @@ fn generate_bindings(
     defines: &Vec<(String, Option<String>)>,
     rustify_enums: &Vec<&str>,
 ) {
+    let sysroot = cc::Build::new()
+        .get_compiler()
+        .to_command()
+        .arg("--print-sysroot")
+        .output()
+        .unwrap();
+    let sysroot = PathBuf::from(std::str::from_utf8(&sysroot.stdout).unwrap().trim_end());
     let mut builder = bindgen::Builder::default()
         .header("bindings.h")
         .ctypes_prefix("cty")
@@ -437,11 +444,7 @@ fn generate_bindings(
         .size_t_is_usize(true)
         .clang_arg("-D__SOFTFP__")
         .clang_arg("-DUSER_DEVICE_NAME_LEN=0")
-        .clang_arg(&translate_path("-I/Applications/ARM/arm-none-eabi/include"))
-        .clang_arg(&translate_path(
-            "-I/usr/lib/gcc/arm-none-eabi/12.2.1/include",
-        ))
-        .clang_arg(&translate_path("-I/usr/include/newlib"))
+        .clang_arg(format!("--sysroot={}", sysroot.to_str().unwrap()))
         .clang_arg("-Wno-expansion-to-defined");
 
     for (key, value) in defines {

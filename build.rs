@@ -140,6 +140,11 @@ fn generate_config_file(file_name: &str, content: &str) {
 }
 
 fn generate_user_modules_config() {
+    if cfg!(feature = "no_ble") {
+        generate_config_file("user_modules_config.h", "");
+        return;
+    }
+
     let excludes = [
         ("profile_custom_server1", "EXCLUDE_DLG_CUSTS1"),
         ("profile_custom_server2", "EXCLUDE_DLG_CUSTS2"),
@@ -168,6 +173,11 @@ fn generate_user_modules_config() {
 }
 
 fn generate_user_profiles_config() {
+    if cfg!(feature = "no_ble") {
+        generate_config_file("user_profiles_config.h", "");
+        return;
+    }
+
     let profiles = [
         ("profile_custom_server1", "CFG_PRF_CUST1"),
         ("profile_custom_server2", "CFG_PRF_CUST2"),
@@ -191,6 +201,11 @@ fn generate_user_profiles_config() {
 }
 
 fn generate_user_config() {
+    if cfg!(feature = "no_ble") {
+        generate_config_file("user_config.h", "");
+        return;
+    }
+
     #[cfg(all(feature = "address_mode_public", feature = "address_mode_static"))]
     compile_error!("Only one address mode feature flag can be set!");
 
@@ -243,96 +258,82 @@ fn setup_build() -> (
 ) {
     let sdk_path = env::var("SDK_PATH")
         .map(|path| Path::new(&path).to_path_buf())
-        .unwrap_or(PathBuf::new().join("..").join("sdk"))
+        .unwrap_or_else(|_| PathBuf::from("..").join("sdk"))
         .to_str()
         .unwrap()
         .to_string();
 
-    #[allow(unused_mut)]
-    let mut include_dirs: Vec<_> = INCLUDE_PATHS.into();
-
-    #[allow(unused_mut)]
-    let mut sdk_c_sources: Vec<_> = SDK_BASE_C_SOURCES.into();
+    let mut include_dirs: Vec<String> = INCLUDE_PATHS
+        .iter()
+        .map(|&p| format!("{}{}", sdk_path, p))
+        .collect();
+    let mut sdk_c_sources: Vec<String> = SDK_BASE_C_SOURCES
+        .iter()
+        .map(|&p| format!("{}{}", sdk_path, p))
+        .collect();
 
     if cfg!(not(feature = "no_ble")) {
-        sdk_c_sources.extend_from_slice(SDK_BLE_C_SOURCES);
+        sdk_c_sources.extend(
+            SDK_BLE_C_SOURCES
+                .iter()
+                .map(|&p| format!("{}{}", sdk_path, p)),
+        );
     }
 
-    let mut defines: Vec<(&str, Option<&str>)> = vec![("__DA14531__", None)];
+    let mut defines: Vec<(String, Option<String>)> = vec![("__DA14531__".to_string(), None)];
 
-    #[allow(unused_mut)]
-    let mut include_files: Vec<&str> = Vec::new();
+    // Add feature-based defines
+    let feature_defines = [
+        ("no_ble", "__NON_BLE_EXAMPLE__", None),
+        (
+            "address_mode_public",
+            "USER_CFG_ADDRESS_MODE",
+            Some("APP_CFG_ADDR_PUB"),
+        ),
+        (
+            "address_mode_static",
+            "USER_CFG_ADDRESS_MODE",
+            Some("APP_CFG_ADDR_STATIC"),
+        ),
+        ("ble_server_profiles", "BLE_SERVER_PRF", None),
+        ("ble_client_profiles", "BLE_CLIENT_PRF", None),
+        ("profile_gatt_client", "CFG_PRF_GATTC", None),
+        ("profile_prox_reporter", "CFG_PRF_PXPR", None),
+        ("profile_batt_server", "CFG_PRF_BASS", None),
+        ("profile_findme_target", "CFG_PRF_FMPT", None),
+    ];
 
-    // Enable TRNG
-    defines.push(("CFG_USE_CHACHA20_RAND", None));
-
-    #[cfg(feature = "no_ble")]
-    {
-        defines.push(("__NON_BLE_EXAMPLE__", None));
+    for (feature, define, value) in feature_defines.iter() {
+        if is_feature_enabled(feature) {
+            defines.push((define.to_string(), value.clone().map(|s| s.into())));
+        }
     }
 
-    #[cfg(feature = "address_mode_public")]
-    {
-        defines.push(("USER_CFG_ADDRESS_MODE", Some("APP_CFG_ADDR_PUB")));
-    }
-
-    #[cfg(feature = "address_mode_static")]
-    {
-        defines.push(("USER_CFG_ADDRESS_MODE", Some("APP_CFG_ADDR_STATIC")));
-    }
-
-    #[cfg(feature = "ble_server_profiles")]
-    {
-        defines.push(("BLE_SERVER_PRF", None));
-    }
-
-    #[cfg(feature = "ble_client_profiles")]
-    {
-        defines.push(("BLE_CLIENT_PRF", None));
-    }
-
-    #[cfg(feature = "profile_gatt_client")]
-    {
-        defines.push(("CFG_PRF_GATTC", None));
-        include_dirs.push(&translate_path(
-            "/sdk/ble_stack/profiles/gatt/gatt_client/api",
+    // Add include directories and files
+    let mut include_files: Vec<String> = vec![];
+    if cfg!(feature = "profile_gatt_client") {
+        include_dirs.push(format!(
+            "{}/sdk/ble_stack/profiles/gatt/gatt_client/api",
+            sdk_path
         ));
-        sdk_c_sources.push(&translate_path(
-            "/sdk/app_modules/src/app_gattc/app_gattc.c",
+        sdk_c_sources.push(format!(
+            "{}/sdk/app_modules/src/app_gattc/app_gattc.c",
+            sdk_path
         ));
     }
 
-    #[cfg(feature = "profile_prox_reporter")]
-    {
-        defines.push(("CFG_PRF_PXPR", None));
-        include_dirs.push(&translate_path("/sdk/ble_stack/profiles/prox/proxr/api"));
-        include_files.push(&translate_path("/sdk/app_modules/api/app_proxr.h"));
+    // Add more include directories based on features
+    if cfg!(feature = "profile_prox_reporter") {
+        include_dirs.push(format!(
+            "{}/sdk/ble_stack/profiles/prox/proxr/api",
+            sdk_path
+        ));
+        sdk_c_sources.push(format!("{}/sdk/app_modules/api/app_proxr.h", sdk_path));
     }
-
-    #[cfg(feature = "profile_batt_server")]
-    {
-        defines.push(("CFG_PRF_PXPR", None));
-        include_dirs.push(&translate_path("/sdk/ble_stack/profiles/prox/proxr/api"));
-        include_files.push(&translate_path("/sdk/app_modules/api/app_proxr.h"));
-    }
-
-    #[cfg(feature = "profile_findme_target")]
-    {
-        defines.push(("CFG_PRF_FMPT", None));
-        include_dirs.push(&translate_path("/sdk/ble_stack/profiles/find/findt/api"));
-        include_dirs.push(&translate_path("/sdk/ble_stack/profiles/find"));
-        include_files.push(&translate_path("/sdk/app_modules/api/app_findme.h"));
-    }
-
-    let mut include_dirs: Vec<_> = include_dirs
-        .iter()
-        .map(|path| format!("{}{}", sdk_path, path))
-        .collect();
 
     include_dirs.push(
         env::current_dir()
             .unwrap()
-            .to_path_buf()
             .join("include")
             .to_str()
             .unwrap()
@@ -340,42 +341,32 @@ fn setup_build() -> (
     );
     include_dirs.push(env::var("OUT_DIR").unwrap());
 
-    #[allow(unused_mut)]
-    let mut include_files: Vec<_> = include_files
-        .iter()
-        .map(|path| format!("{}{}", sdk_path, path))
-        .collect();
+    // Add config headers
+    let config_headers: Vec<String> = CONFIG_HEADERS.iter().map(|s| s.to_string()).collect();
+    include_files.extend(config_headers);
 
-    // #[cfg(not(feature = "no_ble"))]
-    // {
-    let mut config_headers: Vec<_> = CONFIG_HEADERS.iter().map(|s| s.to_string()).collect();
-    include_files.append(&mut config_headers);
-    // }
-
-    let sdk_c_sources: Vec<_> = sdk_c_sources
-        .iter()
-        .filter_map(|path| {
-            if cfg!(feature = "no_main") && path.ends_with("arch_main.c") {
-                return None;
-            }
-            if cfg!(not(feature = "driver_spi")) && path.ends_with("spi_531.c") {
-                return None;
-            }
-            if cfg!(not(feature = "driver_spi_flash")) && path.ends_with("spi_flash.c") {
-                return None;
-            }
-            Some(format!("{}{}", sdk_path, path))
+    // Filter SDK C sources based on features
+    let sdk_c_sources: Vec<String> = sdk_c_sources
+        .into_iter()
+        .filter(|path| {
+            !(cfg!(feature = "no_main") && path.ends_with("arch_main.c"))
+                && !(cfg!(not(feature = "driver_spi"))
+                    && path.ends_with(
+                        "spi_531.   
+    c",
+                    ))
+                && !(cfg!(not(feature = "driver_spi_flash")) && path.ends_with("spi_flash.c"))
         })
         .collect();
 
-    let sdk_asm_sources: Vec<_> = SDK_ASM_SOURCES
+    let sdk_asm_sources: Vec<String> = SDK_ASM_SOURCES
         .iter()
         .map(|path| format!("{}{}", sdk_path, path))
         .collect();
 
-    let defines: Vec<_> = defines
+    let defines: Vec<(String, Option<String>)> = defines
         .iter()
-        .map(|(key, value)| (key.to_string(), value.map(|value| value.to_string())))
+        .map(|(key, value)| (key.clone(), value.clone()))
         .collect();
 
     (
@@ -388,10 +379,10 @@ fn setup_build() -> (
 }
 
 fn generate_bindings(
-    include_dirs: &Vec<String>,
-    include_files: &Vec<String>,
-    defines: &Vec<(String, Option<String>)>,
-    rustify_enums: &Vec<&str>,
+    include_dirs: &[String],
+    include_files: &[String],
+    defines: &[(String, Option<String>)],
+    rustify_enums: &[&str],
 ) {
     let bindings_header = if cfg!(feature = "no_ble") {
         "bindings_no_ble.h"
@@ -430,11 +421,10 @@ fn generate_bindings(
     }
 
     for re in rustify_enums {
-        builder = builder.rustified_enum(re)
+        builder = builder.rustified_enum(re);
     }
 
     let bindings = builder.generate().expect("Unable to generate bindings");
-
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))
@@ -442,11 +432,11 @@ fn generate_bindings(
 }
 
 fn compile_sdk(
-    include_dirs: &Vec<String>,
-    include_files: &Vec<String>,
-    defines: &Vec<(String, Option<String>)>,
-    sdk_c_sources: &Vec<String>,
-    sdk_asm_sources: &Vec<String>,
+    include_dirs: &[String],
+    include_files: &[String],
+    defines: &[(String, Option<String>)],
+    sdk_c_sources: &[String],
+    sdk_asm_sources: &[String],
 ) {
     let mut cc_builder = cc::Build::new();
 
@@ -463,71 +453,36 @@ fn compile_sdk(
         .define("USER_DEVICE_NAME_LEN", Some("0"));
 
     for inc_dir in include_dirs {
-        cc_builder = cc_builder.include(translate_path(inc_dir));
+        cc_builder.include(translate_path(inc_dir));
     }
 
     for inc_file in include_files {
-        cc_builder = cc_builder.flag(&format!("-include{}", translate_path(inc_file)));
+        cc_builder.flag(&format!("-include{}", translate_path(inc_file)));
     }
 
     for (key, value) in defines {
-        cc_builder = cc_builder.define(key, value.as_ref().map(|v| v.as_str()));
+        cc_builder.define(key, value.as_deref());
     }
 
     for file in sdk_c_sources {
-        cc_builder = cc_builder.file(translate_path(file));
+        cc_builder.file(translate_path(file));
     }
 
     cc_builder.compile("sdk");
-
-    // cc::Build::new()
-    //     .files(sdk_asm_sources)
-    //     .define("__DA14531__", None)
-    //     .compile("boot");
 }
 
 fn main() {
     let (include_dirs, include_files, sdk_c_sources, sdk_asm_sources, defines) = setup_build();
 
-    if cfg!(not(feature = "no_ble")) {
-        generate_user_config();
-        generate_user_modules_config();
-        generate_user_profiles_config();
-    }
-
-    std::fs::write(
-        "/home/harry/Development/rapitag/firmware-bundle/blinky/build/include_dirs",
-        include_dirs.join("\n"),
-    )
-    .unwrap();
-    std::fs::write(
-        "/home/harry/Development/rapitag/firmware-bundle/blinky/build/include_files",
-        include_files.join("\n"),
-    )
-    .unwrap();
-    std::fs::write(
-        "/home/harry/Development/rapitag/firmware-bundle/blinky/build/sdk_c_sources",
-        sdk_c_sources.join("\n"),
-    )
-    .unwrap();
-    std::fs::write(
-        "/home/harry/Development/rapitag/firmware-bundle/blinky/build/defines",
-        defines
-            .iter()
-            .map(|(s, _)| s.clone())
-            .fold(String::new(), |mut acc, s| {
-                acc += &s;
-                acc += "\n";
-                acc
-            }),
-    )
-    .unwrap();
+    generate_user_config();
+    generate_user_modules_config();
+    generate_user_profiles_config();
 
     generate_bindings(
         &include_dirs,
         &include_files,
         &defines,
-        &vec![
+        &[
             "hl_err",
             "process_event_response",
             "syscntl_dcdc_level_t",
@@ -543,29 +498,13 @@ fn main() {
         &sdk_asm_sources,
     );
 
+    // Rerun if any of these files change
     println!("cargo:rerun-if-changed=bindings.h");
     println!("cargo:rerun-if-changed=build.rs");
 
-    println!(
-        "cargo:rerun-if-changed={}",
-        &translate_path("include/da1458x_config_basic.h")
-    );
-    println!(
-        "cargo:rerun-if-changed={}",
-        &translate_path("include/da1458x_config_advanced.h")
-    );
-    println!(
-        "cargo:rerun-if-changed={}",
-        &translate_path("include/user_callback_config.h")
-    );
-    println!(
-        "cargo:rerun-if-changed={}",
-        &translate_path("include/user_custs_config.h")
-    );
-    println!(
-        "cargo:rerun-if-changed={}",
-        &translate_path("include/user_periph_setup.h")
-    );
+    for header in CONFIG_HEADERS {
+        println!("cargo:rerun-if-changed={}", &translate_path(header));
+    }
 }
 
 fn translate_path(path: &str) -> String {

@@ -1,4 +1,5 @@
 use std::env;
+use std::fmt::format;
 use std::path::{Path, PathBuf};
 
 const INCLUDE_PATHS: &[&str] = &[
@@ -83,7 +84,6 @@ const CONFIG_HEADERS: &[&str] = &[
 
 const SDK_BASE_C_SOURCES: &[&str] = &[
     "/sdk/platform/arch/boot/system_DA14531.c",
-    "/sdk/platform/arch/main/arch_main.c",
     "/sdk/platform/arch/main/arch_system.c",
     "/sdk/platform/arch/main/hardfault_handler.c",
     "/sdk/platform/arch/main/jump_table.c",
@@ -96,8 +96,6 @@ const SDK_BASE_C_SOURCES: &[&str] = &[
     "/sdk/platform/driver/trng/trng.c",
     "/sdk/platform/driver/uart/uart_utils.c",
     "/sdk/platform/driver/uart/uart.c",
-    "/sdk/platform/driver/spi/spi_531.c",
-    "/sdk/platform/driver/spi_flash/spi_flash.c",
     "/sdk/platform/utilities/otp_cs/otp_cs.c",
     "/sdk/platform/utilities/otp_hdr/otp_hdr.c",
 ];
@@ -280,6 +278,24 @@ fn setup_build() -> (
         );
     }
 
+    if cfg!(not(feature = "no_main")) {
+        sdk_c_sources.push(format!("{}/sdk/platform/arch/main/arch_main.c", sdk_path));
+    }
+
+    let feature_sources = [
+        ("driver_spi", "/sdk/platform/driver/spi/spi_531.c"),
+        (
+            "driver_spi_flash",
+            "/sdk/platform/driver/spi_flash/spi_flash.c",
+        ),
+    ];
+
+    for (feature, src) in feature_sources.iter() {
+        if is_feature_enabled(feature) {
+            sdk_c_sources.push(format!("{}{}", sdk_path, src));
+        }
+    }
+
     let mut defines: Vec<(String, Option<String>)> = vec![("__DA14531__".to_string(), None)];
 
     // Add feature-based defines
@@ -345,19 +361,19 @@ fn setup_build() -> (
     let config_headers: Vec<String> = CONFIG_HEADERS.iter().map(|s| s.to_string()).collect();
     include_files.extend(config_headers);
 
-    // Filter SDK C sources based on features
-    let sdk_c_sources: Vec<String> = sdk_c_sources
-        .into_iter()
-        .filter(|path| {
-            !(cfg!(feature = "no_main") && path.ends_with("arch_main.c"))
-                && !(cfg!(not(feature = "driver_spi"))
-                    && path.ends_with(
-                        "spi_531.   
-    c",
-                    ))
-                && !(cfg!(not(feature = "driver_spi_flash")) && path.ends_with("spi_flash.c"))
-        })
-        .collect();
+    // // Filter SDK C sources based on features
+    // let sdk_c_sources: Vec<String> = sdk_c_sources
+    //     .into_iter()
+    //     .filter(|path| {
+    //         !(cfg!(feature = "no_main") && path.ends_with("arch_main.c"))
+    //             && !(cfg!(not(feature = "driver_spi"))
+    //                 && path.ends_with(
+    //                     "spi_531.
+    // c",
+    //                 ))
+    //             && !(cfg!(not(feature = "driver_spi_flash")) && path.ends_with("spi_flash.c"))
+    //     })
+    //     .collect();
 
     let sdk_asm_sources: Vec<String> = SDK_ASM_SOURCES
         .iter()
@@ -440,7 +456,7 @@ fn compile_sdk(
 ) {
     let mut cc_builder = cc::Build::new();
 
-    let mut cc_builder = cc_builder
+    let cc_builder = cc_builder
         .debug(true)
         .target("thumbv6m-none-eabi")
         .flag("-march=armv6-m")

@@ -1,8 +1,11 @@
+#[cfg(not(feature = "no_ble"))]
 pub mod arch;
+#[cfg(not(feature = "no_ble"))]
 pub mod core_modules;
 pub mod driver;
 pub mod system_library;
 pub mod utilities {
+    #[cfg(not(feature = "no_ble"))]
     pub mod otp_cs {
 
         #[inline]

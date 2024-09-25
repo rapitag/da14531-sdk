@@ -86,16 +86,7 @@ const SDK_BASE_C_SOURCES: &[&str] = &[
     "/sdk/platform/arch/boot/system_DA14531.c",
     "/sdk/platform/arch/main/arch_system.c",
     "/sdk/platform/arch/main/hardfault_handler.c",
-    "/sdk/platform/arch/main/jump_table.c",
     "/sdk/platform/arch/main/nmi_handler.c",
-    "/sdk/platform/core_modules/nvds/src/nvds.c",
-    "/sdk/platform/driver/adc/adc_531.c",
-    "/sdk/platform/driver/gpio/gpio.c",
-    "/sdk/platform/driver/hw_otpc/hw_otpc_531.c",
-    "/sdk/platform/driver/syscntl/syscntl.c",
-    "/sdk/platform/driver/trng/trng.c",
-    "/sdk/platform/driver/uart/uart_utils.c",
-    "/sdk/platform/driver/uart/uart.c",
     "/sdk/platform/utilities/otp_cs/otp_cs.c",
     "/sdk/platform/utilities/otp_hdr/otp_hdr.c",
 ];
@@ -103,6 +94,7 @@ const SDK_BASE_C_SOURCES: &[&str] = &[
 const SDK_BLE_C_SOURCES: &[&str] = &[
     "/sdk/platform/arch/main/arch_rom.c",
     "/sdk/platform/arch/main/arch_sleep.c",
+    "/sdk/platform/arch/main/jump_table.c",
     "/sdk/platform/core_modules/crypto/aes.c",
     "/sdk/platform/core_modules/crypto/aes_api.c",
     "/sdk/platform/core_modules/crypto/aes_cbc.c",
@@ -111,6 +103,7 @@ const SDK_BLE_C_SOURCES: &[&str] = &[
     "/sdk/platform/core_modules/rf/src/ble_arp.c",
     "/sdk/platform/core_modules/rf/src/rf_531.c",
     "/sdk/platform/core_modules/rwip/src/rwip.c",
+    "/sdk/platform/core_modules/nvds/src/nvds.c",
     "/sdk/app_modules/src/app_common/app_msg_utils.c",
     "/sdk/app_modules/src/app_common/app_task.c",
     "/sdk/app_modules/src/app_custs/app_customs_task.c",
@@ -138,11 +131,6 @@ fn generate_config_file(file_name: &str, content: &str) {
 }
 
 fn generate_user_modules_config() {
-    if cfg!(feature = "no_ble") {
-        generate_config_file("user_modules_config.h", "");
-        return;
-    }
-
     let excludes = [
         ("profile_custom_server1", "EXCLUDE_DLG_CUSTS1"),
         ("profile_custom_server2", "EXCLUDE_DLG_CUSTS2"),
@@ -153,6 +141,22 @@ fn generate_user_modules_config() {
         ("profile_findme_target", "EXCLUDE_DLG_FINDT"),
         ("profile_findme_locator", "EXCLUDE_DLG_FINDL"),
     ];
+
+    if cfg!(feature = "no_ble") {
+        let mut header = String::from(
+            "#pragma once
+#define EXCLUDE_DLG_GAP (1)
+#define EXCLUDE_DLG_TIMER (1)
+#define EXCLUDE_DLG_MSG (1)
+#define EXCLUDE_DLG_SEC (1)\n",
+        );
+        for (_, define) in &excludes {
+            header += &format!("#define {} (1)\n", define);
+        }
+
+        generate_config_file("user_modules_config.h", &header);
+        return;
+    }
 
     let mut header = String::from(
         "#pragma once
@@ -288,6 +292,19 @@ fn setup_build() -> (
             "driver_spi_flash",
             "/sdk/platform/driver/spi_flash/spi_flash.c",
         ),
+        ("driver_adc", "/sdk/platform/driver/adc/adc_531.c"),
+        ("driver_gpio", "/sdk/platform/driver/gpio/gpio.c"),
+        (
+            "driver_hw_otpc",
+            "/sdk/platform/driver/hw_otpc/hw_otpc_531.c",
+        ),
+        ("driver_syscntl", "/sdk/platform/driver/syscntl/syscntl.c"),
+        ("driver_trng", "/sdk/platform/driver/trng/trng.c"),
+        (
+            "driver_uart_utils",
+            "/sdk/platform/driver/uart/uart_utils.c",
+        ),
+        ("driver_uart", "/sdk/platform/driver/uart/uart.c"),
     ];
 
     for (feature, src) in feature_sources.iter() {
@@ -358,22 +375,17 @@ fn setup_build() -> (
     include_dirs.push(env::var("OUT_DIR").unwrap());
 
     // Add config headers
-    let config_headers: Vec<String> = CONFIG_HEADERS.iter().map(|s| s.to_string()).collect();
+    let config_headers: Vec<String> = CONFIG_HEADERS
+        .iter()
+        .filter_map(|s| {
+            if cfg!(feature = "no_ble") && s.contains("advanced") {
+                None
+            } else {
+                Some(s.to_string())
+            }
+        })
+        .collect();
     include_files.extend(config_headers);
-
-    // // Filter SDK C sources based on features
-    // let sdk_c_sources: Vec<String> = sdk_c_sources
-    //     .into_iter()
-    //     .filter(|path| {
-    //         !(cfg!(feature = "no_main") && path.ends_with("arch_main.c"))
-    //             && !(cfg!(not(feature = "driver_spi"))
-    //                 && path.ends_with(
-    //                     "spi_531.
-    // c",
-    //                 ))
-    //             && !(cfg!(not(feature = "driver_spi_flash")) && path.ends_with("spi_flash.c"))
-    //     })
-    //     .collect();
 
     let sdk_asm_sources: Vec<String> = SDK_ASM_SOURCES
         .iter()

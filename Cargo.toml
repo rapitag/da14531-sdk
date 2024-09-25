@@ -33,22 +33,44 @@ lazy_static = "1.4.0"
 
 [features]
 default = [
-  "custom_rest_evt_cb",
-  "sleep_mode_off",
   "address_mode_static",
-  "profile_dis_server",
+  "alloc",
+  "custom_rest_evt_cb",
+  "driver_gpio",
+  "driver_hw_otpc",
+  "driver_syscntl",
   "profile_custom_server1",
+  "profile_dis_server",
+  "sleep_mode_off",
 ]
+
+# Enable global allocator implementation
+alloc = []
 
 # No main
 no_main = []
+
+# No BLE
+no_ble = [
+  "driver_gpio",
+  "driver_hw_otpc",
+  "driver_syscntl",
+  "no_main",
+]
 
 # Expose unsafe bindings
 expose_bindings = []
 
 # Drivers
+driver_adc = []
+driver_gpio = []
+driver_hw_otpc = []
 driver_spi = []
 driver_spi_flash = []
+driver_syscntl = []
+driver_trng = []
+driver_uart = []
+driver_uart_utils = []
 
 # Custom REST event callback
 custom_rest_evt_cb = []
@@ -63,26 +85,27 @@ address_mode_public = []
 address_mode_static = []
 
 # BLE profiles
-ble_client_profiles = ["ble_profiles"]
 ble_profiles = []
+
+ble_client_profiles = ["ble_profiles"]
 ble_server_profiles = ["ble_profiles"]
+
 profile_anc_client = ["ble_client_profiles"]
-profile_batt_server = ["ble_server_profiles"]
-profile_bcs_server = ["ble_server_profiles"]
-profile_bms_server = ["ble_server_profiles"]
 profile_cts_client = ["ble_client_profiles"]
-profile_cts_server = ["ble_server_profiles"]
+profile_findme_locator = ["ble_client_profiles"]
+profile_gatt_client = ["ble_client_profiles"]
+
 profile_custom_server = []
 profile_custom_server1 = ["ble_server_profiles", "profile_custom_server"]
 profile_custom_server2 = ["ble_server_profiles", "profile_custom_server"]
+
+profile_batt_server = ["ble_server_profiles"]
+profile_bcs_server = ["ble_server_profiles"]
+profile_bms_server = ["ble_server_profiles"]
+profile_cts_server = ["ble_server_profiles"]
 profile_dis_server = ["ble_server_profiles"]
-profile_findme_locator = ["ble_client_profiles"]
 profile_findme_target = ["ble_server_profiles"]
-profile_gatt_client = ["ble_client_profiles"]
 profile_prox_reporter = ["ble_server_profiles"]
 profile_suota_receiver = ["ble_server_profiles"]
 profile_uds_server = ["ble_server_profiles"]
 profile_wss_server = ["ble_server_profiles"]
-
-# Other features
-exclude_dlg_timer = []

@@ -13,6 +13,7 @@ pub mod syscntl {
 }
 
 // ToDo: Port to HAL crate
+#[cfg(not(feature = "no_ble"))]
 pub mod gpio {
     #[inline]
     pub fn GPIO_EnableIRQ(pin: u8, irq: u8, low_input: bool, release_wait: bool, debounce: u8) {

@@ -412,6 +412,13 @@ fn generate_bindings(
     defines: &[(String, Option<String>)],
     rustify_enums: &[&str],
 ) {
+    let sdk_path = env::var("SDK_PATH")
+        .map(|path| Path::new(&path).to_path_buf())
+        .unwrap_or_else(|_| PathBuf::from("..").join("sdk"))
+        .to_str()
+        .unwrap()
+        .to_string();
+
     let bindings_header = if cfg!(feature = "no_ble") {
         "bindings_no_ble.h"
     } else {
@@ -431,6 +438,20 @@ fn generate_bindings(
         ))
         .clang_arg(&translate_path("-I/usr/include/newlib"))
         .clang_arg("-Wno-expansion-to-defined");
+
+    let feature_headers = [
+        ("driver_spi", "/sdk/platform/driver/spi/spi.h"),
+        (
+            "driver_spi_flash",
+            "/sdk/platform/driver/spi_flash/spi_flash.h",
+        ),
+    ];
+
+    for (feature, header) in feature_headers.iter() {
+        if is_feature_enabled(feature) {
+            builder = builder.header(format!("{}{}", sdk_path, header));
+        }
+    }
 
     for (key, value) in defines {
         if let Some(value) = value {

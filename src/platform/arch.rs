@@ -35,3 +35,8 @@ pub fn arch_set_sleep_mode(sleep_state: u32) {
 pub fn arch_set_extended_sleep(otp_copy: bool) {
     unsafe { crate::bindings::arch_set_extended_sleep(otp_copy) }
 }
+
+#[inline]
+pub fn system_init() {
+    unsafe { crate::bindings::system_init() }
+}

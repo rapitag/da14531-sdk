@@ -1,4 +1,3 @@
-#[cfg(not(feature = "no_ble"))]
 pub mod arch;
 #[cfg(not(feature = "no_ble"))]
 pub mod core_modules;

@@ -473,7 +473,7 @@ fn compile_sdk(
     include_files: &Vec<String>,
     defines: &Vec<(String, Option<String>)>,
     sdk_c_sources: &Vec<String>,
-    sdk_asm_sources: &Vec<String>,
+    _sdk_asm_sources: &Vec<String>,
 ) {
     let mut cc_builder = cc::Build::new();
 
@@ -494,7 +494,7 @@ fn compile_sdk(
     }
 
     for inc_file in include_files {
-        cc_builder = cc_builder.flag(&format!("-include{}", translate_path(inc_file)));
+        cc_builder = cc_builder.flag(format!("-include{}", translate_path(inc_file)));
     }
 
     for (key, value) in defines {

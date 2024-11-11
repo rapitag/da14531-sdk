@@ -5,11 +5,10 @@ pub use crate::bindings::{
     adv_channel_map_ADV_CHNL_39_EN as ADV_CHNL_39_EN,
     adv_filter_policy_ADV_ALLOW_SCAN_ANY_CON_ANY as ADV_ALLOW_SCAN_ANY_CON_ANY,
     adv_filter_policy_ADV_ALLOW_SCAN_ANY_CON_WLST as ADV_ALLOW_SCAN_ANY_CON_WLST,
-    bd_addr as BDAddr, co_list as CoList, co_list_hdr as CoListHdr, ADV_DATA_LEN, KEY_LEN,
-    SCAN_RSP_DATA_LEN, hci_le_tx_test_cmd as HciLeTxTestCmd, hci_le_rx_test_cmd as HciLeRxTestCmd,
+    bd_addr as BDAddr, co_list as CoList, co_list_hdr as CoListHdr,
+    hci_le_rx_test_cmd as HciLeRxTestCmd, hci_le_tx_test_cmd as HciLeTxTestCmd, ADV_DATA_LEN,
+    KEY_LEN, SCAN_RSP_DATA_LEN,
 };
-
-
 
 #[inline]
 pub fn co_list_init(list: &mut CoList) {

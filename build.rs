@@ -427,6 +427,7 @@ fn generate_bindings(
 
     let mut builder = bindgen::Builder::default()
         .header(bindings_header)
+        .wrap_static_fns(true)
         .ctypes_prefix("cty")
         .use_core()
         .size_t_is_usize(true)
@@ -435,6 +436,9 @@ fn generate_bindings(
         .clang_arg(&translate_path("-I/Applications/ARM/arm-none-eabi/include"))
         .clang_arg(&translate_path(
             "-I/usr/lib/gcc/arm-none-eabi/12.2.1/include",
+        ))
+        .clang_arg(&translate_path(
+            "-I/usr/lib/gcc/arm-none-eabi/13.2.1/include",
         ))
         .clang_arg(&translate_path("-I/usr/include/newlib"))
         .clang_arg("-Wno-expansion-to-defined");
@@ -515,6 +519,15 @@ fn compile_sdk(
 
     for file in sdk_c_sources {
         cc_builder.file(translate_path(file));
+    }
+
+    // Bindgen creates a C-file for static fns
+    {
+        let mut path = PathBuf::from(env::temp_dir());
+        path.push("bindgen");
+        path.push("extern.c");
+        cc_builder.file(translate_path(path.to_str().unwrap()));
+        cc_builder.include(translate_path(&env::var("CARGO_MANIFEST_DIR").unwrap()));
     }
 
     cc_builder.compile("sdk");

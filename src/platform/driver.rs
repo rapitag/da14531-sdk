@@ -219,6 +219,8 @@ pub mod spi {
 
 #[cfg(feature = "driver_spi_flash")]
 pub mod spi_flash {
+    use rtt_target::rprint;
+
     pub use crate::bindings::{
         spi_flash_cfg_t as SpiFlashConfig, spi_flash_op_t as SpiFlashOp,
         spi_flash_op_t_SPI_FLASH_OP_SE as SPI_FLASH_OP_SE,
@@ -365,6 +367,7 @@ pub mod spi_flash {
             jedec_id,
         )
     }
+
 
     #[inline]
     pub fn spi_flash_release_from_power_down() -> SpiFlashResult {

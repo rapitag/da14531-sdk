@@ -1,5 +1,3 @@
-use core::ptr::addr_of;
-
 use crate::{
     app_modules::{
         app::{zero_app_env_tag, AppEnvTag, APP_EASY_MAX_ACTIVE_CONNECTION},
@@ -24,8 +22,7 @@ use crate::{
     },
     platform::core_modules::{
         common::{
-            co_min, BDAddr, ADV_ALLOW_SCAN_ANY_CON_WLST, ADV_ALL_CHNLS_EN, ADV_CHNL_37_EN,
-            ADV_CHNL_38_EN, ADV_CHNL_39_EN, ADV_DATA_LEN, KEY_LEN, SCAN_RSP_DATA_LEN,
+            co_min, BDAddr, ADV_ALLOW_SCAN_ANY_CON_WLST, ADV_DATA_LEN, KEY_LEN, SCAN_RSP_DATA_LEN,
         },
         ke::task::{ke_state_set, ke_task_create, KeTaskDesc},
         rwip::{KeApiId, TASK_APP, TASK_GAPM, TASK_ID_DISS, TASK_ID_INVALID},
@@ -223,6 +220,7 @@ const USER_PRF_FUNCS: [PrfFuncCallbacks; 1] = [PrfFuncCallbacks {
     enable_func: None,
 }];
 
+// TODO: Replace with safer and more idiomatic way (e.g. immutable static with Mutex?)
 static mut USER_GAPM_CONF: GapmConfiguration = GapmConfiguration {
     role: GAP_ROLE_PERIPHERAL,
     max_mtu: 23,
@@ -244,9 +242,11 @@ static mut USER_GAPM_CONF: GapmConfiguration = GapmConfiguration {
     max_txtime: 2120,
 };
 
-#[cfg(feature = "address_mode_static")]
-static mut APP_RANDOM_ADDR: BDAddr = BDAddr { addr: [0; 6] };
+// TODO: Replace with safer and more idiomatic way (e.g. immutable static with Mutex?)
+// #[cfg(feature = "address_mode_static")]
+// static mut APP_RANDOM_ADDR: BDAddr = BDAddr { addr: [0; 6] };
 
+// TODO: Replace with safer and more idiomatic way (e.g. immutable static with Mutex?)
 configure_user_adv_data!(
     {ADV_TYPE_COMPLETE_LIST_16BIT_SERVICE_IDS, 0x6b, 0xfd},
     {ADV_TYPE_MANUFACTURER_SPECIFIC_DATA, 0x98, 0x05, 0x01, 0x90, 0x01, 0x02, 0x22}

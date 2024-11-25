@@ -16,7 +16,7 @@ pub mod syscntl {
 #[cfg(not(feature = "no_ble"))]
 pub mod gpio {
     #[inline]
-    pub fn GPIO_EnableIRQ(pin: u8, irq: u8, low_input: bool, release_wait: bool, debounce: u8) {
+    pub fn gpio_enable_irq(pin: u8, irq: u8, low_input: bool, release_wait: bool, debounce: u8) {
         unsafe {
             crate::bindings::GPIO_EnableIRQ(
                 0,
@@ -30,12 +30,12 @@ pub mod gpio {
     }
 
     #[inline]
-    pub fn GPIO_RegisterCallback(irq: u8, callback: unsafe extern "C" fn()) {
+    pub fn gpio_register_callback(irq: u8, callback: unsafe extern "C" fn()) {
         unsafe { crate::bindings::GPIO_RegisterCallback(irq as i32, Some(callback)) }
     }
 
     #[inline]
-    pub fn GPIO_ConfigurePin(pin: u32, mode: u32, function: u32, high: bool) {
+    pub fn gpio_configure_pin(pin: u32, mode: u32, function: u32, high: bool) {
         unsafe { crate::bindings::GPIO_ConfigurePin(0, pin, mode, function, high) }
     }
 }
@@ -367,7 +367,6 @@ pub mod spi_flash {
             jedec_id,
         )
     }
-
 
     #[inline]
     pub fn spi_flash_release_from_power_down() -> SpiFlashResult {

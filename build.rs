@@ -89,6 +89,7 @@ const SDK_BASE_C_SOURCES: &[&str] = &[
     "/sdk/platform/arch/main/nmi_handler.c",
     "/sdk/platform/utilities/otp_cs/otp_cs.c",
     "/sdk/platform/utilities/otp_hdr/otp_hdr.c",
+    "/sdk/platform/system_library/src/DA14531/system_library_531.c"
 ];
 
 const SDK_BLE_C_SOURCES: &[&str] = &[

@@ -1,6 +1,7 @@
-use std::env;
-use std::fmt::format;
-use std::path::{Path, PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 const INCLUDE_PATHS: &[&str] = &[
     "/sdk/app_modules/api",
@@ -89,7 +90,7 @@ const SDK_BASE_C_SOURCES: &[&str] = &[
     "/sdk/platform/arch/main/nmi_handler.c",
     "/sdk/platform/utilities/otp_cs/otp_cs.c",
     "/sdk/platform/utilities/otp_hdr/otp_hdr.c",
-    "/sdk/platform/system_library/src/DA14531/system_library_531.c"
+    "/sdk/platform/system_library/src/DA14531/system_library_531.c",
 ];
 
 const SDK_BLE_C_SOURCES: &[&str] = &[
@@ -490,7 +491,7 @@ fn compile_sdk(
     include_files: &[String],
     defines: &[(String, Option<String>)],
     sdk_c_sources: &[String],
-    sdk_asm_sources: &[String],
+    _sdk_asm_sources: &[String],
 ) {
     let mut cc_builder = cc::Build::new();
 

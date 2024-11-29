@@ -78,19 +78,19 @@ const INCLUDE_PATHS: &[&str] = &[
 ];
 
 const CONFIG_HEADERS: &[&str] = &[
-    "da1458x_config_basic.h",
-    "da1458x_config_advanced.h",
+    "da14535_config_basic.h",
+    "da14535_config_advanced.h",
     "user_config.h",
 ];
 
 const SDK_BASE_C_SOURCES: &[&str] = &[
-    "/sdk/platform/arch/boot/system_DA14531.c",
+    "/sdk/platform/arch/boot/system_DA14535.c",
     "/sdk/platform/arch/main/arch_system.c",
     "/sdk/platform/arch/main/hardfault_handler.c",
     "/sdk/platform/arch/main/nmi_handler.c",
     "/sdk/platform/utilities/otp_cs/otp_cs.c",
     "/sdk/platform/utilities/otp_hdr/otp_hdr.c",
-    "/sdk/platform/system_library/src/DA14531/system_library_531.c",
+    "/sdk/platform/system_library/src/DA14535/system_library_535.c",
 ];
 
 const SDK_BLE_C_SOURCES: &[&str] = &[
@@ -117,8 +117,8 @@ const SDK_BLE_C_SOURCES: &[&str] = &[
 ];
 
 const SDK_ASM_SOURCES: &[&str] = &[
-    //"/sdk/platform/arch/boot/GCC/ivtable_DA14531.S",
-    //"/sdk/platform/arch/boot/GCC/startup_DA14531.S",
+    //"/sdk/platform/arch/boot/GCC/ivtable_DA14535.S",
+    //"/sdk/platform/arch/boot/GCC/startup_DA14535.S",
 ];
 
 fn is_feature_enabled(feature: &str) -> bool {
@@ -315,7 +315,7 @@ fn setup_build() -> (
         }
     }
 
-    let mut defines: Vec<(String, Option<String>)> = vec![("__DA14531__".to_string(), None)];
+    let mut defines: Vec<(String, Option<String>)> = vec![("__DA14531__".to_string(), None),("__DA14535__".to_string(), None),("BLE_APP_PRESENT".to_string(), None)];
 
     // Add feature-based defines
     let feature_defines = [

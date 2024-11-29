@@ -1,3 +1,4 @@
+extern crate alloc;
 use core::mem;
 
 use alloc::boxed::Box;

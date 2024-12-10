@@ -25,7 +25,7 @@ use crate::{
             co_min, BDAddr, ADV_ALLOW_SCAN_ANY_CON_WLST, ADV_DATA_LEN, KEY_LEN, SCAN_RSP_DATA_LEN,
         },
         ke::task::{ke_state_set, ke_task_create, KeTaskDesc},
-        rwip::{KeApiId, TASK_APP, TASK_GAPM, TASK_ID_DISS, TASK_ID_INVALID},
+        rwip::{KeApiId, TASK_APP, TASK_GAPM, TASK_ID_INVALID},
     },
 };
 
@@ -223,7 +223,7 @@ const USER_PRF_FUNCS: [PrfFuncCallbacks; 1] = [PrfFuncCallbacks {
 // TODO: Replace with safer and more idiomatic way (e.g. immutable static with Mutex?)
 static mut USER_GAPM_CONF: GapmConfiguration = GapmConfiguration {
     role: GAP_ROLE_PERIPHERAL,
-    max_mtu: 23,
+    max_mtu: 512,
     #[cfg(feature = "address_mode_public")]
     addr_type: app_cfg_addr_type(APP_CFG_ADDR_PUB),
     #[cfg(feature = "address_mode_static")]
@@ -462,9 +462,7 @@ fn app_easy_gap_dev_config_create_msg() -> KeMsgGapmSetDevConfigCmd {
                 unsafe {
                     app_on_generate_static_random_addr(&mut bd_addr);
                 }
-                unsafe {
-                    msg.addr.addr.copy_from_slice(&bd_addr.addr);
-                }
+                msg.addr.addr.copy_from_slice(&bd_addr.addr);
             } else {
                 panic!("With static address mode, you either need to defined a valid static address or the callback app_on_generate_static_random_addr!");
             }
